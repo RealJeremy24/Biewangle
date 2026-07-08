@@ -36,9 +36,13 @@
     <string name="display_settings">显示设置</string>
     <string name="large_text_mode">超大字体模式</string>
     <string name="alarm_title">⏰ 提醒时间到</string>
-    <string name="alarm_playing">🔔 铃声正在循环播放…</string>
+    <string name="alarm_title_no_icon">提醒时间到</string>
+    <string name="alarm_playing">铃声循环播放中</string>
+    <string name="alarm_time_chip">⏱ 1分钟前</string>
     <string name="i_know">我 知 道 了</string>
+    <string name="alarm_slider_hint">滑动结束提醒  →</string>
     <string name="snooze_10min">稍后提醒（10分钟后）</string>
+    <string name="encourage_footer">💡 补充维 C，记得报平安~</string>
     <string name="today_memo_empty">今天没有待办事项</string>
     <string name="widget_title">今天的备忘</string>
     <string name="encourage_high">🌟\n太棒了！您已经完成了大部分事项！\n继续保持，健康生活每一天！</string>

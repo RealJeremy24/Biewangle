@@ -16,3 +16,7 @@ val ChipSelected = Color(0xFFE67E22)          // 选中芯片橙
 val ChipUnselected = Color(0xFFEFEBE9)        // 未选中芯片浅灰
 val DividerWarm = Color(0xFFE8D5C4)           // 暖色调分割线
 val WhiteText = Color(0xFFFFFFFF)             // 白色文字（用于深色按钮上）
+val AlarmBgStart = Color(0xFFFFE0B2)          // 弹窗渐变起点（浅橙）
+val AlarmBgMid = Color(0xFFFFF3E0)            // 弹窗渐变中段
+val AlarmBgEnd = Color(0xFFFFFAF2)            // 弹窗渐变终点（暖杏白）
+val GlassWhite = Color(0xB3FFFFFF)            // 玻璃拟态半透明白（70% opacity）

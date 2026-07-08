@@ -9,11 +9,17 @@
         <item name="android:colorAccent">#E67E22</item>
     </style>
 
-    <!-- 全屏提醒主题 -->
+    <!-- 全屏提醒主题:状态栏透明,让 Compose 渐变背景贯穿整个屏幕 -->
     <style name="Theme.Biewangle.Reminder" parent="android:Theme.Material.Light.NoActionBar">
-        <item name="android:colorBackground">#FFF8F0</item>
-        <item name="android:statusBarColor">#D84315</item>
-        <item name="android:windowFullscreen">true</item>
+        <item name="android:colorBackground">@android:color/transparent</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+        <item name="android:windowTranslucentStatus">false</item>
+        <item name="android:windowTranslucentNavigation">false</item>
+        <item name="android:windowFullscreen">false</item>
         <item name="android:windowNoTitle">true</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowLightNavigationBar">true</item>
     </style>
 </resources>
