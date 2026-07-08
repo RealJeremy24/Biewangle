@@ -130,3 +130,12 @@ Biewangle/
 ## 目标用户
 
 面向中老年用户，大字体、暖色调、简化交互。
+
+---
+
+## 📚 项目调研记录
+
+> 重要技术决策、踩坑记录放在 `docs/` 目录下。当前文档：
+
+- **[alarm-fullscreen-investigation.md](docs/alarm-fullscreen-investigation.md)** — HarmonyOS 上第三方 App **无法自动全屏弹 Activity** 的系统级限制（已尝试 4 套方案全部拦截）。当前 v1.9 退而求其次：通知 + 铃声 + 用户点通知进全屏。**接到"全屏弹提醒"相关需求时必读**。
+
