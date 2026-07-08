@@ -5,6 +5,7 @@ import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.biewangle.dontforget.R
@@ -16,6 +17,8 @@ class AlarmReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         val memoId = intent.getLongExtra(Constants.EXTRA_MEMO_ID, -1L)
         if (memoId == -1L) return
+
+        Log.d(Constants.LOG_TAG, "Receiver触发, action=${intent.action}, memoId=$memoId")
 
         when (intent.action) {
             Constants.ACTION_DISMISS -> {
@@ -41,15 +44,35 @@ class AlarmReceiver : BroadcastReceiver() {
                 val content = intent.getStringExtra(Constants.EXTRA_MEMO_CONTENT) ?: ""
                 val useCustomRingtone = intent.getBooleanExtra(Constants.EXTRA_USE_CUSTOM_RINGTONE, true)
 
-                // 1. 先发通知（保证通知一定出现，即使前台服务启动失败）
+                // 1. 先发通知（保证通知一定出现，作为兜底）
                 showFullScreenNotification(context, memoId, title, content, useCustomRingtone)
+                Log.d(Constants.LOG_TAG, "通知已发送")
 
-                // 2. 再尝试启动前台服务播放铃声（Android 12+ 后台可能失败，通知已作为降级）
+                // 2. 主动启动全屏 AlarmActivity（解决国产 ROM 拦截 FullScreenIntent 的问题）
+                //    从 BroadcastReceiver.onReceive 启动 Activity 是 Google 文档明确允许的路径，
+                //    不受 Android 10+ 后台启动 Activity 限制影响
+                try {
+                    val activityIntent = Intent(context, AlarmActivity::class.java).apply {
+                        flags = Intent.FLAG_ACTIVITY_NEW_TASK or
+                                Intent.FLAG_ACTIVITY_CLEAR_TOP or
+                                Intent.FLAG_ACTIVITY_SINGLE_TOP
+                        putExtra(Constants.EXTRA_MEMO_ID, memoId)
+                        putExtra(Constants.EXTRA_MEMO_TITLE, title)
+                        putExtra(Constants.EXTRA_MEMO_CONTENT, content)
+                        putExtra(Constants.EXTRA_USE_CUSTOM_RINGTONE, useCustomRingtone)
+                    }
+                    context.startActivity(activityIntent)
+                    Log.d(Constants.LOG_TAG, "Receiver.startActivity 成功")
+                } catch (e: Exception) {
+                    Log.e(Constants.LOG_TAG, "Receiver.startActivity 失败", e)
+                }
+
+                // 3. 启动前台服务播放铃声（Android 12+ 后台可能失败，通知已作为降级）
                 try {
                     AlarmForegroundService.start(context, memoId, title, content, useCustomRingtone)
+                    Log.d(Constants.LOG_TAG, "前台服务启动命令已发出")
                 } catch (e: Exception) {
-                    // Android 12+ 后台启动前台服务可能抛 ForegroundServiceStartNotAllowedException
-                    // 通知已经发出，用户可见
+                    Log.e(Constants.LOG_TAG, "前台服务启动失败（Android 12+ 后台限制 / HarmonyOS 加固）", e)
                 }
             }
         }

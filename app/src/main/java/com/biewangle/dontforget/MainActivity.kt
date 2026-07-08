@@ -34,6 +34,19 @@ class MainActivity : ComponentActivity() {
         ActivityResultContracts.StartActivityForResult()
     ) { }
 
+    // 请求全屏通知权限（Android 14+需要）
+    private val fullScreenIntentLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { _ ->
+        // 用户从系统设置返回后再次检查
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            val nm = getSystemService(NOTIFICATION_SERVICE) as android.app.NotificationManager
+            if (!nm.canUseFullScreenIntent()) {
+                Toast.makeText(this, "未开启全屏通知，到时提醒只能从通知栏下拉", Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -94,6 +107,32 @@ class MainActivity : ComponentActivity() {
                     exactAlarmLauncher.launch(intent)
                 } catch (e: Exception) {
                     // 降级使用非精确闹钟
+                }
+            }
+        }
+
+        // Android 14+ 全屏通知权限（让闹钟到点能直接弹出全屏）
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            val nm = getSystemService(NOTIFICATION_SERVICE) as android.app.NotificationManager
+            if (!nm.canUseFullScreenIntent()) {
+                Toast.makeText(
+                    this,
+                    "请允许「别忘了」使用全屏通知，到时能直接弹出提醒",
+                    Toast.LENGTH_LONG
+                ).show()
+                try {
+                    val intent = Intent(Settings.ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENT).apply {
+                        data = Uri.parse("package:$packageName")
+                    }
+                    fullScreenIntentLauncher.launch(intent)
+                } catch (e: Exception) {
+                    // 降级：跳到应用详情页
+                    try {
+                        val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                            data = Uri.parse("package:$packageName")
+                        }
+                        startActivity(intent)
+                    } catch (_: Exception) {}
                 }
             }
         }

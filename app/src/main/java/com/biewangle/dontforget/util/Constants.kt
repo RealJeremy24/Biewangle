@@ -8,6 +8,9 @@ object Constants {
     // 通知ID
     const val NOTIFICATION_ID_ALARM_SERVICE = 1001
 
+    // 调试日志 tag
+    const val LOG_TAG = "BiewangleAlarm"
+
     // Intent Action
     const val ACTION_SHOW_REMINDER = "com.biewangle.dontforget.ACTION_SHOW_REMINDER"
     const val ACTION_DISMISS = "com.biewangle.dontforget.ACTION_DISMISS"
