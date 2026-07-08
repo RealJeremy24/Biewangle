@@ -5,7 +5,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -69,13 +69,14 @@ fun BiewangleNavHost() {
                 ) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceEvenly,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         listOf(Screen.Memos, Screen.Settings).forEach { screen ->
                             val selected = currentRoute == screen.route
-                            Box(
+                            Column(
                                 modifier = Modifier
+                                    .weight(1f)
+                                    .fillMaxWidth()
                                     .clickable {
                                         navController.navigate(screen.route) {
                                             popUpTo(navController.graph.startDestinationId) {
@@ -85,31 +86,27 @@ fun BiewangleNavHost() {
                                             restoreState = true
                                         }
                                     }
-                                    .padding(vertical = 8.dp)
+                                    .padding(horizontal = 8.dp, vertical = 8.dp)
+                                    .background(
+                                        if (selected) PrimaryOrange.copy(alpha = 0.3f) else CardWhite,
+                                        RoundedCornerShape(24.dp)
+                                    )
+                                    .padding(vertical = 20.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(4.dp)
                             ) {
-                                Row(
-                                    modifier = Modifier
-                                        .background(
-                                            if (selected) PrimaryOrange else CardWhite,
-                                            RoundedCornerShape(24.dp)
-                                        )
-                                        .padding(horizontal = 24.dp, vertical = 12.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                ) {
-                                    Icon(
-                                        screen.icon,
-                                        contentDescription = screen.label,
-                                        modifier = Modifier.size(24.dp),
-                                        tint = if (selected) WhiteText else TextWarmGray
-                                    )
-                                    Text(
-                                        screen.label,
-                                        fontSize = 16.sp,
-                                        color = if (selected) WhiteText else TextWarmGray,
-                                        fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal
-                                    )
-                                }
+                                Icon(
+                                    screen.icon,
+                                    contentDescription = screen.label,
+                                    modifier = Modifier.size(32.dp),
+                                    tint = if (selected) WhiteText else TextWarmGray
+                                )
+                                Text(
+                                    screen.label,
+                                    fontSize = 18.sp,
+                                    color = if (selected) WhiteText else TextWarmGray,
+                                    fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal
+                                )
                             }
                         }
                     }

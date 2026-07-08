@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -15,6 +16,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -24,9 +26,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.biewangle.dontforget.BiewangleApp
+import com.biewangle.dontforget.R
 import com.biewangle.dontforget.service.AlarmForegroundService
 import com.biewangle.dontforget.service.AlarmScheduler
 import com.biewangle.dontforget.ui.theme.AlertOrangeRed
@@ -180,7 +184,11 @@ fun AlarmScreen(
                 }
 
                 Spacer(Modifier.height(16.dp))
-                Text("💊", fontSize = 36.sp)
+                Image(
+                    painter = painterResource(id = R.drawable.biewangle_smile),
+                    contentDescription = "微笑提醒",
+                    modifier = Modifier.size(64.dp)
+                )
             }
 
             Spacer(Modifier.height(24.dp))

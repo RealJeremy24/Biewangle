@@ -30,6 +30,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TimePicker
+import androidx.compose.material3.TimePickerDefaults
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
@@ -53,6 +54,7 @@ import com.biewangle.dontforget.ui.theme.CardWhite
 import com.biewangle.dontforget.ui.theme.ChipSelected
 import com.biewangle.dontforget.ui.theme.ChipUnselected
 import com.biewangle.dontforget.ui.theme.DividerWarm
+import com.biewangle.dontforget.ui.theme.EncourageBg
 import com.biewangle.dontforget.ui.theme.PrimaryOrange
 import com.biewangle.dontforget.ui.theme.TextDarkBrown
 import com.biewangle.dontforget.ui.theme.TextWarmGray
@@ -183,13 +185,6 @@ fun AddMemoSheet(viewModel: MemoViewModel) {
         Spacer(Modifier.height(16.dp))
 
         // 日期选择行
-        Text(
-            text = "选择日期",
-            fontSize = scaledSp(20),
-            fontWeight = FontWeight.Medium,
-            color = TextDarkBrown,
-            modifier = Modifier.padding(bottom = 8.dp)
-        )
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -413,7 +408,17 @@ fun AddMemoSheet(viewModel: MemoViewModel) {
                 showTimePicker = false
             }
         ) {
-            TimePicker(state = timePickerState)
+            TimePicker(
+                state = timePickerState,
+                colors = TimePickerDefaults.colors(
+                    clockDialColor = EncourageBg,
+                    selectorColor = PrimaryOrange,
+                    clockDialSelectedContentColor = PrimaryOrange,
+                    clockDialUnselectedContentColor = TextWarmGray,
+                    timeSelectorSelectedContentColor = WhiteText,
+                    timeSelectorUnselectedContentColor = TextWarmGray
+                )
+            )
         }
     }
 
