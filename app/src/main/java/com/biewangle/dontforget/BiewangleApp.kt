@@ -21,8 +21,8 @@ class BiewangleApp : Application() {
     val settingsRepository by lazy { SettingsRepository(database.settingsDao()) }
 
     // 全局字体缩放（响应式，设置页修改后整个 App 自动更新）
-    // 默认档位 1（缩放 0.69f）
-    private val _fontScaleFlow = MutableStateFlow(0.69f)
+    // 默认档位 2（缩放 0.78f）
+    private val _fontScaleFlow = MutableStateFlow(0.78f)
     val fontScaleFlow: StateFlow<Float> = _fontScaleFlow.asStateFlow()
 
     fun updateFontScale(scale: Float) {

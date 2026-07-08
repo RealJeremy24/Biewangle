@@ -39,14 +39,14 @@ class SettingsViewModel(
     private val _ringtoneConfig = MutableStateFlow(RingtoneConfig())
     val ringtoneConfig: StateFlow<RingtoneConfig> = _ringtoneConfig.asStateFlow()
 
-    private val _fontScale = MutableStateFlow(0.69f)
+    private val _fontScale = MutableStateFlow(0.78f)
     val fontScale: StateFlow<Float> = _fontScale.asStateFlow()
 
     // Slider 0~10 → 0.6~1.5
     val fontScaleSteps: Float get() = _fontScale.value
 
     // Slider position 0~10, default at tier 2 (0.78f)
-    private val _fontSliderPosition = MutableStateFlow(1)
+    private val _fontSliderPosition = MutableStateFlow(2)
     val fontSliderPosition: StateFlow<Int> = _fontSliderPosition.asStateFlow()
 
     private val _vibrateEnabled = MutableStateFlow(true)

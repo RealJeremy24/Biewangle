@@ -43,6 +43,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.biewangle.dontforget.BiewangleApp
@@ -390,7 +391,26 @@ fun AddMemoSheet(viewModel: MemoViewModel) {
                 TextButton(onClick = { showDatePicker = false }) { Text("取消", fontSize = scaledSp(22)) }
             }
         ) {
-            DatePicker(state = datePickerState)
+            DatePicker(
+                state = datePickerState,
+                title = null,
+                showModeToggle = false,
+                headline = {
+                    // 居中日期
+                    Text(
+                        text = remember(datePickerState.selectedDateMillis) {
+                            datePickerState.selectedDateMillis?.let {
+                                DateTimeUtils.formatFullDate(it)
+                            } ?: "选择日期"
+                        },
+                        fontSize = scaledSp(28),
+                        fontWeight = FontWeight.Bold,
+                        color = TextDarkBrown,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            )
         }
     }
 
@@ -413,9 +433,9 @@ fun AddMemoSheet(viewModel: MemoViewModel) {
                 colors = TimePickerDefaults.colors(
                     clockDialColor = EncourageBg,
                     selectorColor = PrimaryOrange,
-                    clockDialSelectedContentColor = PrimaryOrange,
+                    clockDialSelectedContentColor = TextDarkBrown,
                     clockDialUnselectedContentColor = TextWarmGray,
-                    timeSelectorSelectedContentColor = WhiteText,
+                    timeSelectorSelectedContentColor = TextDarkBrown,
                     timeSelectorUnselectedContentColor = TextWarmGray
                 )
             )

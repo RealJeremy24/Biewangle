@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
+import androidx.compose.ui.draw.clip
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -142,10 +143,6 @@ fun AlarmScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            // 图标
-            Text("🔔", fontSize = 48.sp)
-            Spacer(Modifier.height(16.dp))
-
             // 标题
             Text(
                 text = "⏰ 提醒时间到",
@@ -155,7 +152,18 @@ fun AlarmScreen(
                 textAlign = TextAlign.Center
             )
 
-            Spacer(Modifier.height(24.dp))
+            Spacer(Modifier.height(32.dp))
+
+            // 主图 — 温馨提醒
+            Image(
+                painter = painterResource(id = R.drawable.mama2),
+                contentDescription = "温馨提醒",
+                modifier = Modifier
+                    .size(200.dp)
+                    .clip(RoundedCornerShape(16.dp))
+            )
+
+            Spacer(Modifier.height(28.dp))
 
             // 事项卡片
             Column(
@@ -167,28 +175,22 @@ fun AlarmScreen(
             ) {
                 Text(
                     text = title,
-                    fontSize = scaledSp(28),
-                    fontWeight = FontWeight.Bold,
+                    fontSize = scaledSp(24),
+                    fontWeight = FontWeight.SemiBold,
                     color = TextDarkBrown,
-                    textAlign = TextAlign.Center
+                    textAlign = TextAlign.Center,
+                    letterSpacing = 1.sp
                 )
 
                 if (content.isNotEmpty()) {
                     Spacer(Modifier.height(12.dp))
                     Text(
                         text = content,
-                        fontSize = scaledSp(22),
+                        fontSize = scaledSp(18),
                         color = TextWarmGray,
                         textAlign = TextAlign.Center
                     )
                 }
-
-                Spacer(Modifier.height(16.dp))
-                Image(
-                    painter = painterResource(id = R.drawable.biewangle_smile),
-                    contentDescription = "微笑提醒",
-                    modifier = Modifier.size(64.dp)
-                )
             }
 
             Spacer(Modifier.height(24.dp))
@@ -243,6 +245,17 @@ fun AlarmScreen(
                     fontWeight = FontWeight.Medium
                 )
             }
+
+            Spacer(Modifier.height(32.dp))
+
+            // 鼓励语
+            Text(
+                text = "💡 生活再忙也别忘了补充维 C 噢！\n西瓜已备好，奖励自己一个大大的赞！👍🍉",
+                fontSize = scaledSp(18),
+                color = TextWarmGray,
+                textAlign = TextAlign.Center,
+                lineHeight = 28.sp
+            )
         }
     }
 }

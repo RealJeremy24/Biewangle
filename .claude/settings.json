@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "Bash(adb install *)",
+      "Bash(find /c/Users/11447 -maxdepth 5 -name \"adb.exe\" 2>/dev/null; find /d -maxdepth 4 -name \"adb.exe\" 2>/dev/null)",
+      "Read(//c/Users/11447/**)",
+      "Bash(\"/d/Android/Sdk/platform-tools/adb\" install *)",
+      "Bash(git add *)"
+    ]
+  }
+}

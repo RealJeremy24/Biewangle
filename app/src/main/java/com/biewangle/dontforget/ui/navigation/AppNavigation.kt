@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.EditNote
 import androidx.compose.material.icons.filled.Insights
@@ -77,6 +78,8 @@ fun BiewangleNavHost() {
                                 modifier = Modifier
                                     .weight(1f)
                                     .fillMaxWidth()
+                                    .padding(horizontal = 8.dp, vertical = 8.dp)
+                                    .clip(RoundedCornerShape(24.dp))
                                     .clickable {
                                         navController.navigate(screen.route) {
                                             popUpTo(navController.graph.startDestinationId) {
@@ -86,7 +89,6 @@ fun BiewangleNavHost() {
                                             restoreState = true
                                         }
                                     }
-                                    .padding(horizontal = 8.dp, vertical = 8.dp)
                                     .background(
                                         if (selected) PrimaryOrange.copy(alpha = 0.3f) else CardWhite,
                                         RoundedCornerShape(24.dp)
