@@ -11,6 +11,7 @@ import android.os.Build
  *
  * 按钮点击 → [AudioManager.FX_KEY_CLICK]
  * 时间拨动 → [AudioManager.FX_FOCUS_NAVIGATION_UP]
+ * 日期选择 → [AudioManager.FX_FOCUS_NAVIGATION_RIGHT]
  */
 object SoundEffectPlayer {
 
@@ -26,6 +27,13 @@ object SoundEffectPlayer {
      */
     fun playTimeScroll(context: Context) {
         play(context, AudioManager.FX_FOCUS_NAVIGATION_UP)
+    }
+
+    /**
+     * 播放日期点击音效（轻巧的方向导航音，与滚轮音同系列但可区分）
+     */
+    fun playDateClick(context: Context) {
+        play(context, AudioManager.FX_FOCUS_NAVIGATION_RIGHT)
     }
 
     private fun play(context: Context, effectType: Int) {

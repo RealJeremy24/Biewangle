@@ -23,6 +23,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -40,6 +41,7 @@ import com.biewangle.dontforget.ui.theme.CardWhite
 import com.biewangle.dontforget.ui.theme.PrimaryOrange
 import com.biewangle.dontforget.ui.theme.TextWarmGray
 import com.biewangle.dontforget.ui.theme.WhiteText
+import com.biewangle.dontforget.util.SoundEffectPlayer
 
 sealed class Screen(
     val route: String,
@@ -57,6 +59,7 @@ fun BiewangleNavHost() {
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
+    val context = LocalContext.current
 
     // Splash 页面不显示底部导航栏
     val showBottomBar = currentRoute != Screen.Splash.route
@@ -81,6 +84,7 @@ fun BiewangleNavHost() {
                                     .padding(horizontal = 8.dp, vertical = 8.dp)
                                     .clip(RoundedCornerShape(24.dp))
                                     .clickable {
+                                        SoundEffectPlayer.playButtonClick(context)
                                         navController.navigate(screen.route) {
                                             popUpTo(navController.graph.startDestinationId) {
                                                 saveState = true

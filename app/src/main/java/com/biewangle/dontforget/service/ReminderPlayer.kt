@@ -44,6 +44,10 @@ class ReminderPlayer(private val context: Context) {
     }
     private var isVibrating = false
 
+    // Handler 震动循环：每次定时发一个新的 one-shot 震动，不依赖 createWaveform 的 repeat 参数
+    private var vibrationHandler: android.os.Handler? = null
+    private var vibrationRunnable: Runnable? = null
+
     fun startLooping(useCustomRingtone: Boolean = true) {
         if (useCustomRingtone) {
             // 异步加载铃声配置，避免 runBlocking 阻塞主线程
@@ -152,27 +156,42 @@ class ReminderPlayer(private val context: Context) {
 
     /** 必须在主线程调用（Vibrator 操作） */
     private fun doStartVibration() {
-
         try {
-            // 循环震动模式：震动 500ms + 暂停 500ms
-            val pattern = longArrayOf(0, 500, 500)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                val effect = VibrationEffect.createWaveform(pattern, 0)
-                vibrator.vibrate(effect)
-            } else {
-                @Suppress("DEPRECATION")
-                vibrator.vibrate(pattern, 0)
+            val handler = android.os.Handler(android.os.Looper.getMainLooper())
+            vibrationHandler = handler
+
+            val runnable = object : Runnable {
+                override fun run() {
+                    if (!isVibrating) return
+                    try {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                            vibrator.vibrate(
+                                VibrationEffect.createOneShot(2000, VibrationEffect.DEFAULT_AMPLITUDE)
+                            )
+                        } else {
+                            @Suppress("DEPRECATION")
+                            vibrator.vibrate(2000)
+                        }
+                        // 2 秒后再发下一次震动，形成无缝持续循环
+                        handler.postDelayed(this, 2000)
+                    } catch (_: Exception) {}
+                }
             }
+            vibrationRunnable = runnable
+            handler.post(runnable)
             isVibrating = true
         } catch (_: Exception) {}
     }
 
     private fun stopVibration() {
         if (isVibrating) {
+            isVibrating = false  // 先标记停止，阻止 handler 再发新震动
             try {
+                vibrationHandler?.removeCallbacks(vibrationRunnable ?: return)
+                vibrationHandler = null
+                vibrationRunnable = null
                 vibrator.cancel()
             } catch (_: Exception) {}
-            isVibrating = false
         }
     }
 

@@ -245,7 +245,10 @@ fun AddMemoSheet(viewModel: MemoViewModel) {
             }
             Switch(
                 checked = formState.reminderEnabled,
-                onCheckedChange = { viewModel.toggleReminder(it) },
+                onCheckedChange = {
+                    SoundEffectPlayer.playButtonClick(context)
+                    viewModel.toggleReminder(it)
+                },
                 colors = SwitchDefaults.colors(
                     checkedThumbColor = WhiteText,
                     checkedTrackColor = PrimaryOrange,
@@ -288,7 +291,10 @@ fun AddMemoSheet(viewModel: MemoViewModel) {
                 )
                 Switch(
                     checked = formState.useCustomRingtone,
-                    onCheckedChange = { viewModel.toggleCustomRingtone(it) },
+                    onCheckedChange = {
+                        SoundEffectPlayer.playButtonClick(context)
+                        viewModel.toggleCustomRingtone(it)
+                    },
                     colors = SwitchDefaults.colors(
                         checkedThumbColor = WhiteText,
                         checkedTrackColor = PrimaryOrange,
@@ -433,6 +439,15 @@ fun AddMemoSheet(viewModel: MemoViewModel) {
                     )
                 }
             )
+            // 日期点击音效：跳过首次触发（dialog 打开时的初始值），之后点击不同日期播放音效
+            var dateHasInteracted by remember { mutableStateOf(false) }
+            LaunchedEffect(datePickerState.selectedDateMillis) {
+                if (dateHasInteracted) {
+                    SoundEffectPlayer.playDateClick(context)
+                } else {
+                    dateHasInteracted = true
+                }
+            }
         }
     }
 
