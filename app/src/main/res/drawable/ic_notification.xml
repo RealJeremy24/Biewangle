@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- 铃铛图标 -->
+    <path
+        android:fillColor="#E67E22"
+        android:pathData="M54,20 C44,20 36,28 36,38 L36,48 C36,48 30,52 30,56 L30,58 L78,58 L78,56 C78,52 72,48 72,48 L72,38 C72,28 64,20 54,20 Z" />
+    <path
+        android:fillColor="#D84315"
+        android:pathData="M54,78 C58.5,78 62,74.5 62,70 L46,70 C46,74.5 49.5,78 54,78 Z" />
+    <path
+        android:fillColor="#E67E22"
+        android:pathData="M54,76 C56.2,76 58,74.2 58,72 L50,72 C50,74.2 51.8,76 54,76 Z" />
+</vector>

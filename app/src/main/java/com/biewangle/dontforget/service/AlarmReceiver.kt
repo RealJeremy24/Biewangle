@@ -1,0 +1,117 @@
+package com.biewangle.dontforget.service
+
+import android.app.NotificationManager
+import android.app.PendingIntent
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
+import com.biewangle.dontforget.R
+import com.biewangle.dontforget.ui.screens.alarm.AlarmActivity
+import com.biewangle.dontforget.util.Constants
+
+class AlarmReceiver : BroadcastReceiver() {
+
+    override fun onReceive(context: Context, intent: Intent) {
+        val memoId = intent.getLongExtra(Constants.EXTRA_MEMO_ID, -1L)
+        if (memoId == -1L) return
+
+        when (intent.action) {
+            Constants.ACTION_DISMISS -> {
+                // 关闭：停止铃声 + 取消通知
+                AlarmForegroundService.stop(context)
+                val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+                nm.cancel(memoId.toInt())
+            }
+            Constants.ACTION_SNOOZE -> {
+                // 稍后提醒：停止铃声 + 取消通知 + 重新调度
+                AlarmForegroundService.stop(context)
+                val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+                nm.cancel(memoId.toInt())
+
+                val title = intent.getStringExtra(Constants.EXTRA_MEMO_TITLE) ?: "提醒"
+                val content = intent.getStringExtra(Constants.EXTRA_MEMO_CONTENT) ?: ""
+                val snoozeTime = System.currentTimeMillis() + Constants.SNOOZE_DELAY_MS
+                AlarmScheduler(context).schedule(memoId, title, content, snoozeTime, true)
+            }
+            else -> {
+                // 闹钟触发
+                val title = intent.getStringExtra(Constants.EXTRA_MEMO_TITLE) ?: "提醒"
+                val content = intent.getStringExtra(Constants.EXTRA_MEMO_CONTENT) ?: ""
+                val useCustomRingtone = intent.getBooleanExtra(Constants.EXTRA_USE_CUSTOM_RINGTONE, true)
+
+                // 1. 先发通知（保证通知一定出现，即使前台服务启动失败）
+                showFullScreenNotification(context, memoId, title, content, useCustomRingtone)
+
+                // 2. 再尝试启动前台服务播放铃声（Android 12+ 后台可能失败，通知已作为降级）
+                try {
+                    AlarmForegroundService.start(context, memoId, title, content, useCustomRingtone)
+                } catch (e: Exception) {
+                    // Android 12+ 后台启动前台服务可能抛 ForegroundServiceStartNotAllowedException
+                    // 通知已经发出，用户可见
+                }
+            }
+        }
+    }
+
+    private fun showFullScreenNotification(
+        context: Context,
+        memoId: Long,
+        title: String,
+        content: String,
+        useCustomRingtone: Boolean
+    ) {
+        // 全屏跳转 Intent
+        val fullScreenIntent = Intent(context, AlarmActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            putExtra(Constants.EXTRA_MEMO_ID, memoId)
+            putExtra(Constants.EXTRA_MEMO_TITLE, title)
+            putExtra(Constants.EXTRA_MEMO_CONTENT, content)
+            putExtra(Constants.EXTRA_USE_CUSTOM_RINGTONE, useCustomRingtone)
+        }
+
+        val fullScreenPendingIntent = PendingIntent.getActivity(
+            context, memoId.toInt(), fullScreenIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        // 关闭 Action
+        val dismissIntent = Intent(context, AlarmReceiver::class.java).apply {
+            action = Constants.ACTION_DISMISS
+            putExtra(Constants.EXTRA_MEMO_ID, memoId)
+        }
+        val dismissPendingIntent = PendingIntent.getBroadcast(
+            context, (memoId.toInt() + 10000), dismissIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        // 稍后提醒 Action
+        val snoozeIntent = Intent(context, AlarmReceiver::class.java).apply {
+            action = Constants.ACTION_SNOOZE
+            putExtra(Constants.EXTRA_MEMO_ID, memoId)
+            putExtra(Constants.EXTRA_MEMO_TITLE, title)
+            putExtra(Constants.EXTRA_MEMO_CONTENT, content)
+        }
+        val snoozePendingIntent = PendingIntent.getBroadcast(
+            context, (memoId.toInt() + 20000), snoozeIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val notification = NotificationCompat.Builder(context, Constants.CHANNEL_REMINDER)
+            .setSmallIcon(R.drawable.ic_notification)
+            .setContentTitle(title)
+            .setContentText(content)
+            .setPriority(NotificationCompat.PRIORITY_MAX)
+            .setCategory(NotificationCompat.CATEGORY_ALARM)
+            .setFullScreenIntent(fullScreenPendingIntent, true)
+            .setOngoing(true)
+            .setAutoCancel(false)
+            .setTimeoutAfter(0)
+            .addAction(android.R.drawable.ic_menu_close_clear_cancel, "关闭", dismissPendingIntent)
+            .addAction(android.R.drawable.ic_media_pause, "稍后提醒", snoozePendingIntent)
+            .build()
+
+        NotificationManagerCompat.from(context).notify(memoId.toInt(), notification)
+    }
+}

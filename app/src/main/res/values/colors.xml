@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="background_warm">#FFF8F0</color>
+    <color name="card_white">#FFFFFF</color>
+    <color name="primary_orange">#E67E22</color>
+    <color name="text_dark_brown">#4A2C2A</color>
+    <color name="text_warm_gray">#8D6E63</color>
+    <color name="completed_green">#66BB6A</color>
+    <color name="alert_orange_red">#D84315</color>
+    <color name="encourage_bg">#FFF3E0</color>
+    <color name="chip_selected">#E67E22</color>
+    <color name="chip_unselected">#EFEBE9</color>
+</resources>

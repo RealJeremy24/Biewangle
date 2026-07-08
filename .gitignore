@@ -1,0 +1,28 @@
+# Build outputs
+build/
+app/build/
+*.apk
+*.aab
+
+# Gradle
+.gradle/
+local.properties
+/.gradle/
+
+# Android Studio
+.idea/
+*.iml
+*.ipr
+*.iws
+.copyright/
+screenshots/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Kotlin
+kotlin/
+
+# Generated files
+app/build/generated/

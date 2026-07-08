@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>别忘了 - UI 设计预览（新版）</title>
+<style>
+  :root {
+    --bg: #FFF8F0;
+    --card: #FFFFFF;
+    --primary: #E67E22;
+    --primary-dark: #D35400;
+    --text: #4A2C2A;
+    --text-secondary: #8D6E63;
+    --green: #66BB6A;
+    --alert: #D84315;
+    --encourage-bg: #FFF3E0;
+    --chip-selected: #E67E22;
+    --chip-unselected: #EFEBE9;
+    --divider: #E8D5C4;
+    --white: #FFFFFF;
+    --shadow: 0 2px 8px rgba(0,0,0,0.08);
+    --shadow-lg: 0 4px 16px rgba(0,0,0,0.12);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    background: #e8ddd0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px;
+    gap: 40px;
+    flex-wrap: wrap;
+  }
+
+  .phone-frame {
+    width: 390px;
+    height: 844px;
+    background: var(--bg);
+    border-radius: 40px;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3), 0 0 0 3px #333, 0 0 0 6px #555, 0 0 0 8px #333;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+  }
+
+  .phone-label {
+    position: absolute;
+    top: -32px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #333;
+    color: #fff;
+    padding: 4px 16px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+    z-index: 50;
+  }
+
+  /* Status bar */
+  .status-bar {
+    height: 48px;
+    background: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 28px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    flex-shrink: 0;
+    position: relative;
+    z-index: 5;
+  }
+  .status-bar .time { font-size: 16px; font-weight: 700; }
+  .status-icons { display: flex; gap: 6px; align-items: center; font-size: 13px; }
+
+  /* Dynamic island notch */
+  .notch {
+    width: 120px; height: 30px;
+    background: #1a1a1a;
+    border-radius: 20px;
+    position: absolute;
+    top: 8px; left: 50%;
+    transform: translateX(-50%);
+    z-index: 50;
+  }
+
+  /* Screen content area */
+  .screen-content {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+  }
+  .screen-content::-webkit-scrollbar { width: 0; }
+
+  /* ═══════════════════════════════════════════ */
+  /*  NEW: Brand Top Bar (品牌暖橙渐变) */
+  /* ═══════════════════════════════════════════ */
+  .brand-top-bar {
+    background: linear-gradient(135deg, #E67E22 0%, #F0A860 40%, #F5CBA0 100%);
+    padding: 20px 20px 22px;
+    border-radius: 0 0 24px 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 2;
+  }
+  .brand-top-bar .bar-icon {
+    font-size: 28px;
+    flex-shrink: 0;
+  }
+  .brand-top-bar .bar-text {
+    display: flex;
+    flex-direction: column;
+  }
+  .brand-top-bar .bar-title {
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--white);
+    letter-spacing: 2px;
+  }
+  .brand-top-bar .bar-subtitle {
+    font-size: 13px;
+    color: rgba(255,255,255,0.75);
+    font-weight: 400;
+    margin-top: 2px;
+  }
+
+  /* Quick Template Chips */
+  .template-row {
+    display: flex;
+    gap: 10px;
+    padding: 14px 20px;
+    overflow-x: auto;
+    flex-shrink: 0;
+  }
+  .template-row::-webkit-scrollbar { display: none; }
+  .template-chip {
+    flex-shrink: 0;
+    height: 44px;
+    padding: 0 22px;
+    border-radius: 22px;
+    font-size: 18px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: var(--chip-unselected);
+    color: var(--text);
+    border: none;
+    font-family: inherit;
+  }
+  .template-chip:hover { background: #e8d5c4; }
+  .template-chip.active {
+    background: var(--chip-selected);
+    color: var(--white);
+  }
+
+  /* Memo List */
+  .memo-list {
+    flex: 1;
+    padding: 0 16px 100px;
+    overflow-y: auto;
+  }
+  .memo-list::-webkit-scrollbar { width: 0; }
+  .date-header {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    padding: 14px 4px 8px;
+    letter-spacing: 1px;
+  }
+
+  /* Memo Card */
+  .memo-card {
+    background: var(--card);
+    border-radius: 16px;
+    padding: 16px 18px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    box-shadow: var(--shadow);
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+    height: 80px;
+  }
+  .memo-card:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-lg);
+  }
+  .memo-card.completed { opacity: 0.5; }
+  .memo-card.completed .memo-title { text-decoration: line-through; }
+  .memo-checkbox {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    border: 2.5px solid var(--divider);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .memo-checkbox.checked {
+    background: var(--green);
+    border-color: var(--green);
+    color: white;
+  }
+  .memo-info { flex: 1; min-width: 0; }
+  .memo-title {
+    font-size: 22px;
+    font-weight: 500;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .memo-title .reminder-time {
+    color: var(--primary);
+    font-weight: 600;
+    margin-right: 6px;
+  }
+  .memo-subtitle {
+    font-size: 16px;
+    color: var(--text-secondary);
+    margin-top: 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .memo-more {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    flex-shrink: 0;
+    border: none;
+    background: transparent;
+    letter-spacing: 2px;
+  }
+  .memo-more:hover { background: var(--chip-unselected); }
+
+  /* Empty state */
+  .empty-state {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding-bottom: 80px;
+    color: var(--text-secondary);
+    font-size: 22px;
+    text-align: center;
+    line-height: 1.8;
+  }
+
+  /* FAB */
+  .fab {
+    position: absolute;
+    bottom: 100px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--primary);
+    color: var(--white);
+    border: none;
+    padding: 16px 36px;
+    border-radius: 30px;
+    font-size: 22px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(230, 126, 34, 0.4);
+    transition: all 0.2s;
+    z-index: 5;
+    letter-spacing: 2px;
+    font-family: inherit;
+  }
+  .fab:hover {
+    background: var(--primary-dark);
+    transform: translateX(-50%) translateY(-2px);
+    box-shadow: 0 6px 20px rgba(230, 126, 34, 0.5);
+  }
+
+  /* ═══════════════════════════════════════════ */
+  /*  NEW: Bottom Navigation (改进版) */
+  /* ═══════════════════════════════════════════ */
+  .bottom-nav {
+    height: 72px;
+    background: var(--card);
+    border-top: 1px solid var(--divider);
+    display: flex;
+    flex-shrink: 0;
+  }
+  .nav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-size: 16px;        /* reduced from 20sp */
+    color: var(--text-secondary);
+    transition: color 0.2s;
+    font-family: inherit;
+  }
+  .nav-item .nav-icon { font-size: 28px; }
+  .nav-item.active {
+    color: var(--primary);
+    /* NO background indicator — clean selected state */
+  }
+  .nav-item.active .nav-icon {
+    /* Subtle scale effect instead of white pill */
+    transform: scale(1.1);
+    transition: transform 0.2s;
+  }
+
+  /* ═══════════════════════════════════════════ */
+  /*  SETTINGS SCREEN */
+  /* ═══════════════════════════════════════════ */
+  .stats-row {
+    display: flex;
+    gap: 10px;
+    padding: 16px;
+  }
+  .stat-card {
+    flex: 1;
+    background: var(--card);
+    border-radius: 16px;
+    padding: 18px 12px;
+    text-align: center;
+    box-shadow: var(--shadow);
+  }
+  .stat-card .stat-emoji { font-size: 36px; margin-bottom: 8px; }
+  .stat-card .stat-value {
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--primary);
+  }
+  .stat-card .stat-label {
+    font-size: 18px;
+    color: var(--text-secondary);
+    margin-top: 4px;
+  }
+
+  .encourage-card {
+    margin: 0 16px 16px;
+    background: var(--encourage-bg);
+    border-radius: 16px;
+    padding: 20px;
+    text-align: center;
+    font-size: 22px;
+    color: var(--text);
+    line-height: 1.6;
+  }
+  .encourage-card .enc-emoji { font-size: 40px; display: block; margin-bottom: 8px; }
+
+  .settings-section {
+    margin: 0 16px 16px;
+    background: var(--card);
+    border-radius: 16px;
+    padding: 4px 18px;
+    box-shadow: var(--shadow);
+  }
+  .settings-section h3 {
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--text);
+    padding: 16px 0 8px;
+  }
+  .settings-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--divider);
+  }
+  .settings-row:last-child { border-bottom: none; }
+
+  /* Font size slider row */
+  .font-slider-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 0;
+  }
+  .font-slider-row .font-label-small {
+    font-size: 12px;
+    color: var(--text-secondary);
+    font-weight: 300;
+  }
+  .font-slider-row .font-label-large {
+    font-size: 28px;
+    color: var(--primary);
+    font-weight: 700;
+  }
+  .font-slider-row input[type="range"] {
+    flex: 1;
+    -webkit-appearance: none;
+    height: 6px;
+    border-radius: 3px;
+    background: linear-gradient(to right, var(--chip-unselected) 0%, var(--chip-unselected) 50%, var(--chip-unselected) 100%);
+    outline: none;
+  }
+  .font-slider-row input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--white);
+    border: 3px solid var(--primary);
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  }
+  .font-preview {
+    text-align: center;
+    padding: 8px 0 4px;
+    color: var(--text);
+    font-weight: 500;
+  }
+
+  .settings-label {
+    font-size: 20px;
+    color: var(--text);
+  }
+  .settings-value {
+    font-size: 18px;
+    color: var(--text-secondary);
+    cursor: pointer;
+  }
+
+  .version-footer {
+    text-align: center;
+    padding: 24px;
+    font-size: 16px;
+    color: var(--text-secondary);
+  }
+
+  /* Toggle switch */
+  .toggle {
+    width: 52px; height: 30px;
+    border-radius: 15px;
+    background: var(--divider);
+    cursor: pointer;
+    position: relative;
+    transition: background 0.2s;
+    border: none;
+    flex-shrink: 0;
+  }
+  .toggle.on { background: var(--primary); }
+  .toggle::after {
+    content: '';
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    background: white;
+    position: absolute;
+    top: 2px; left: 2px;
+    transition: left 0.2s;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  }
+  .toggle.on::after { left: 24px; }
+
+  /* Screen visibility */
+  .screen { display: none; flex-direction: column; flex: 1; overflow: hidden; position: relative; }
+  .screen.active { display: flex; }
+
+  /* ═══════════════════════════════════════════ */
+  /* COMPARISON: Old vs New labels */
+  /* ═══════════════════════════════════════════ */
+  .comparison-badge {
+    position: absolute;
+    top: 56px;
+    right: 12px;
+    z-index: 50;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 10px;
+    letter-spacing: 1px;
+  }
+  .badge-new { background: #4CAF50; color: #fff; }
+  .badge-old { background: #999; color: #fff; }
+
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════ -->
+<!--  PHONE 1: NEW DESIGN (新版设计)           -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="phone-frame" style="position:relative;">
+  <div style="position:absolute;top:-32px;left:50%;transform:translateX(-50%);background:#4CAF50;color:#fff;padding:4px 16px;border-radius:12px;font-size:13px;font-weight:600;white-space:nowrap;z-index:50;">✨ 新版设计</div>
+  <div class="notch"></div>
+
+  <!-- STATUS BAR -->
+  <div class="status-bar">
+    <span class="time">9:41</span>
+    <span class="status-icons">📶 🔋 85%</span>
+  </div>
+
+  <!-- ============ MEMOS SCREEN (NEW) ============ -->
+  <div class="screen active" id="newMemoScreen">
+    <div class="screen-content">
+      <!-- ★ NEW Brand Top Bar -->
+      <div class="brand-top-bar">
+        <span class="bar-icon">🏠</span>
+        <div class="bar-text">
+          <span class="bar-title">冲凉最舒适</span>
+          <span class="bar-subtitle">别忘乐 · 生活好帮手</span>
+        </div>
+      </div>
+
+      <div class="template-row">
+        <button class="template-chip">💊 吃药</button>
+        <button class="template-chip">🏥 复诊</button>
+        <button class="template-chip">🛒 买菜</button>
+        <button class="template-chip">📞 电话</button>
+        <button class="template-chip">🏃 锻炼</button>
+      </div>
+
+      <div class="memo-list">
+        <div class="date-header">今天  7月6日  星期日</div>
+
+        <div class="memo-card">
+          <div class="memo-checkbox checked">✓</div>
+          <div class="memo-info">
+            <div class="memo-title"><span class="reminder-time">早上 8:00</span>吃降压药</div>
+            <div class="memo-subtitle">每天 · 一次一片，饭后服用</div>
+          </div>
+          <button class="memo-more">⋯</button>
+        </div>
+
+        <div class="memo-card">
+          <div class="memo-checkbox"></div>
+          <div class="memo-info">
+            <div class="memo-title"><span class="reminder-time">下午 2:30</span>去医院复诊</div>
+            <div class="memo-subtitle">不重复 · 带医保卡和病历本</div>
+          </div>
+          <button class="memo-more">⋯</button>
+        </div>
+
+        <div class="memo-card">
+          <div class="memo-checkbox"></div>
+          <div class="memo-info">
+            <div class="memo-title"><span class="reminder-time">上午 10:00</span>去超市买菜</div>
+            <div class="memo-subtitle">每周 · 买蔬菜水果</div>
+          </div>
+          <button class="memo-more">⋯</button>
+        </div>
+
+        <div class="date-header">明天  7月7日  星期一</div>
+
+        <div class="memo-card completed">
+          <div class="memo-checkbox checked">✓</div>
+          <div class="memo-info">
+            <div class="memo-title">给女儿打电话</div>
+            <div class="memo-subtitle">不重复</div>
+          </div>
+          <button class="memo-more">⋯</button>
+        </div>
+
+        <div class="memo-card">
+          <div class="memo-checkbox"></div>
+          <div class="memo-info">
+            <div class="memo-title"><span class="reminder-time">早上 7:00</span>晨练散步</div>
+            <div class="memo-subtitle">每天 · 公园走三圈</div>
+          </div>
+          <button class="memo-more">⋯</button>
+        </div>
+      </div>
+
+      <button class="fab">＋ 添加事项</button>
+    </div>
+
+    <!-- ★ NEW Bottom Nav (cleaner, no white indicator) -->
+    <div class="bottom-nav">
+      <button class="nav-item active" onclick="switchNewTab('memos')">
+        <span class="nav-icon">📝</span>
+        <span>事项</span>
+      </button>
+      <button class="nav-item" id="newNavSettings" onclick="switchNewTab('settings')">
+        <span class="nav-icon">📊</span>
+        <span>我的</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ============ SETTINGS SCREEN (NEW) ============ -->
+  <div class="screen" id="newSettingsScreen">
+    <div class="screen-content">
+      <!-- ★ NEW Brand Top Bar for Settings -->
+      <div class="brand-top-bar">
+        <span class="bar-icon">⚙️</span>
+        <div class="bar-text">
+          <span class="bar-title">统计与设置</span>
+          <span class="bar-subtitle">数据总览 · 偏好调整</span>
+        </div>
+      </div>
+
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-emoji">📝</div>
+          <div class="stat-value">12</div>
+          <div class="stat-label">总事项</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-emoji">✅</div>
+          <div class="stat-value">8</div>
+          <div class="stat-label">已完成</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-emoji">📊</div>
+          <div class="stat-value">67%</div>
+          <div class="stat-label">完成率</div>
+        </div>
+      </div>
+
+      <div class="encourage-card">
+        <span class="enc-emoji">💪</span>
+        加油！您已经完成了一半的事项，<br>再接再厉！
+      </div>
+
+      <div class="settings-section">
+        <h3>📳 提醒设置</h3>
+        <div class="settings-row">
+          <span class="settings-label">提醒时震动</span>
+          <button class="toggle on"></button>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <h3>🎨 显示设置</h3>
+        <div class="settings-row" style="flex-direction:column;align-items:stretch;">
+          <span class="settings-label" style="margin-bottom:10px;">字体大小</span>
+          <div class="font-slider-row">
+            <span class="font-label-small">A</span>
+            <input type="range" min="0" max="10" value="5" step="1"
+                   oninput="updateFontPreview(this.value)">
+            <span class="font-label-large">A</span>
+          </div>
+          <div class="font-preview" id="fontPreview" style="font-size:22px;">
+            字体大小预览
+          </div>
+        </div>
+      </div>
+
+      <div class="version-footer">冲凉最舒适 v1.0</div>
+    </div>
+
+    <!-- ★ Same clean bottom nav -->
+    <div class="bottom-nav">
+      <button class="nav-item" id="newNavMemos2" onclick="switchNewTab('memos')">
+        <span class="nav-icon">📝</span>
+        <span>事项</span>
+      </button>
+      <button class="nav-item active" id="newNavSettings2" onclick="switchNewTab('settings')">
+        <span class="nav-icon">📊</span>
+        <span>我的</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!--  PHONE 2: OLD DESIGN (旧版对照)           -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="phone-frame" style="position:relative;">
+  <div style="position:absolute;top:-32px;left:50%;transform:translateX(-50%);background:#999;color:#fff;padding:4px 16px;border-radius:12px;font-size:13px;font-weight:600;white-space:nowrap;z-index:50;">📋 旧版对照</div>
+  <div class="notch"></div>
+
+  <div class="status-bar">
+    <span class="time">9:41</span>
+    <span class="status-icons">📶 🔋 85%</span>
+  </div>
+
+  <!-- OLD MemoScreen -->
+  <div class="screen active" id="oldMemoScreen">
+    <div class="screen-content">
+      <!-- OLD plain white top bar -->
+      <div style="background:#fff;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;border-bottom:1px solid #E8D5C4;">
+        <h1 style="font-size:28px;font-weight:700;color:#4A2C2A;letter-spacing:2px;">冲凉最舒适</h1>
+        <span style="font-size:28px;">📝</span>
+      </div>
+
+      <div class="template-row">
+        <button class="template-chip">💊 吃药</button>
+        <button class="template-chip">🏥 复诊</button>
+        <button class="template-chip">🛒 买菜</button>
+        <button class="template-chip">📞 电话</button>
+        <button class="template-chip">🏃 锻炼</button>
+      </div>
+
+      <div class="memo-list">
+        <div class="date-header">今天  7月6日  星期日</div>
+
+        <div class="memo-card">
+          <div class="memo-checkbox checked">✓</div>
+          <div class="memo-info">
+            <div class="memo-title"><span class="reminder-time">早上 8:00</span>吃降压药</div>
+            <div class="memo-subtitle">每天 · 一次一片，饭后服用</div>
+          </div>
+          <button class="memo-more">⋯</button>
+        </div>
+
+        <div class="memo-card">
+          <div class="memo-checkbox"></div>
+          <div class="memo-info">
+            <div class="memo-title"><span class="reminder-time">下午 2:30</span>去医院复诊</div>
+            <div class="memo-subtitle">不重复 · 带医保卡和病历本</div>
+          </div>
+          <button class="memo-more">⋯</button>
+        </div>
+
+        <div class="memo-card">
+          <div class="memo-checkbox"></div>
+          <div class="memo-info">
+            <div class="memo-title"><span class="reminder-time">上午 10:00</span>去超市买菜</div>
+            <div class="memo-subtitle">每周 · 买蔬菜水果</div>
+          </div>
+          <button class="memo-more">⋯</button>
+        </div>
+      </div>
+
+      <button class="fab">＋ 添加事项</button>
+    </div>
+
+    <!-- OLD bottom nav (with white indicator issue) -->
+    <div class="bottom-nav">
+      <button class="nav-item active" style="position:relative;" onclick="switchOldTab('memos')">
+        <!-- Simulated white pill indicator behind icon -->
+        <span style="position:absolute;top:6px;width:56px;height:34px;background:#fff;border-radius:17px;z-index:0;"></span>
+        <span class="nav-icon" style="position:relative;z-index:1;">📝</span>
+        <span style="position:relative;z-index:1;font-size:20px;">事项</span>
+      </button>
+      <button class="nav-item" id="oldNavSettings" onclick="switchOldTab('settings')">
+        <span class="nav-icon">📊</span>
+        <span style="font-size:20px;">我的</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- OLD SettingsScreen -->
+  <div class="screen" id="oldSettingsScreen">
+    <div class="screen-content">
+      <!-- OLD plain white top bar -->
+      <div style="background:#fff;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;border-bottom:1px solid #E8D5C4;">
+        <h1 style="font-size:28px;font-weight:700;color:#4A2C2A;letter-spacing:2px;">统计与设置</h1>
+        <span style="font-size:28px;">📊</span>
+      </div>
+
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-emoji">📋</div>
+          <div class="stat-value">12</div>
+          <div class="stat-label">总事项</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-emoji">✅</div>
+          <div class="stat-value">8</div>
+          <div class="stat-label">已完成</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-emoji">📈</div>
+          <div class="stat-value">67%</div>
+          <div class="stat-label">完成率</div>
+        </div>
+      </div>
+
+      <div class="encourage-card">
+        <span class="enc-emoji">💪</span>
+        加油！您已经完成了一半的事项
+      </div>
+
+      <div class="settings-section">
+        <h3>🔔 提醒设置</h3>
+        <div class="settings-row">
+          <span class="settings-label">默认铃声</span>
+          <span class="settings-value">系统默认 ›</span>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <h3>🎨 显示设置</h3>
+        <div class="settings-row" style="flex-direction:column;align-items:stretch;">
+          <span class="settings-label" style="margin-bottom:10px;">字体大小</span>
+          <div class="font-slider-row">
+            <span class="font-label-small">A</span>
+            <!-- OLD: slider at position 3 (wrong, near small A) -->
+            <input type="range" min="0" max="10" value="3" step="1"
+                   oninput="this.nextElementSibling.nextElementSibling.style.fontSize=(16+this.value*1.4)+'px'">
+            <span class="font-label-large">A</span>
+          </div>
+          <div class="font-preview" style="font-size:22px;">
+            字体大小预览
+          </div>
+        </div>
+      </div>
+
+      <div class="version-footer">别忘了 v1.0</div>
+    </div>
+
+    <!-- OLD bottom nav -->
+    <div class="bottom-nav">
+      <button class="nav-item" id="oldNavMemos2" onclick="switchOldTab('memos')">
+        <span class="nav-icon">📝</span>
+        <span style="font-size:20px;">事项</span>
+      </button>
+      <button class="nav-item active" style="position:relative;" id="oldNavSettings2" onclick="switchOldTab('settings')">
+        <span style="position:absolute;top:6px;width:56px;height:34px;background:#fff;border-radius:17px;z-index:0;"></span>
+        <span class="nav-icon" style="position:relative;z-index:1;">📊</span>
+        <span style="position:relative;z-index:1;font-size:20px;">我的</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ═══ NEW DESIGN tab switching ═══
+  function switchNewTab(tab) {
+    document.getElementById('newMemoScreen').classList.toggle('active', tab === 'memos');
+    document.getElementById('newSettingsScreen').classList.toggle('active', tab === 'settings');
+    // Update memo screen nav
+    const navItems1 = document.querySelectorAll('#newMemoScreen .nav-item, #newSettingsScreen .nav-item');
+    // More targeted approach:
+    document.querySelectorAll('#newMemoScreen .bottom-nav .nav-item, #newSettingsScreen .bottom-nav .nav-item').forEach(item => {
+      item.classList.remove('active');
+    });
+    if (tab === 'memos') {
+      document.querySelector('#newMemoScreen .bottom-nav .nav-item:first-child').classList.add('active');
+      document.querySelector('#newSettingsScreen .bottom-nav .nav-item:first-child').classList.add('active');
+    } else {
+      document.querySelector('#newMemoScreen .bottom-nav .nav-item:last-child').classList.add('active');
+      document.querySelector('#newSettingsScreen .bottom-nav .nav-item:last-child').classList.add('active');
+    }
+  }
+
+  // ═══ OLD DESIGN tab switching ═══
+  function switchOldTab(tab) {
+    document.getElementById('oldMemoScreen').classList.toggle('active', tab === 'memos');
+    document.getElementById('oldSettingsScreen').classList.toggle('active', tab === 'settings');
+  }
+
+  // ═══ Font preview ═══
+  function updateFontPreview(val) {
+    const scale = 0.6 + parseInt(val) * 0.09; // NEW mapping: pos 5 = 1.05 ≈ 1.0
+    const preview = document.getElementById('fontPreview');
+    preview.style.fontSize = (22 * scale) + 'px';
+  }
+</script>
+
+</body>
+</html>

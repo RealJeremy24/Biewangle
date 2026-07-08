@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 主主题：暖色调 -->
+    <style name="Theme.Biewangle" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:colorBackground">#FFF8F0</item>
+        <item name="android:statusBarColor">#FFF8F0</item>
+        <item name="android:navigationBarColor">#FFF8F0</item>
+        <item name="android:colorPrimary">#E67E22</item>
+        <item name="android:colorAccent">#E67E22</item>
+    </style>
+
+    <!-- 全屏提醒主题 -->
+    <style name="Theme.Biewangle.Reminder" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:colorBackground">#FFF8F0</item>
+        <item name="android:statusBarColor">#D84315</item>
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowNoTitle">true</item>
+    </style>
+</resources>
