@@ -55,6 +55,7 @@ class BiewangleApp : Application() {
                     setShowBadge(true)
                     enableVibration(true)   // 震动作为降级路径（前台服务可能无法启动）
                     setBypassDnd(true)
+                    lockscreenVisibility = android.app.Notification.VISIBILITY_PUBLIC  // 锁屏显示完整内容
                     // 不设置 sound = null，让通知使用系统默认闹钟铃声作为降级
                     // 前台服务 MediaPlayer 启动后会覆盖此声音
                 },

@@ -85,7 +85,7 @@ class AlarmReceiver : BroadcastReceiver() {
         content: String,
         useCustomRingtone: Boolean
     ) {
-        // 全屏跳转 Intent
+        // 主操作 Intent —— 点击通知正文进入 AlarmActivity
         val fullScreenIntent = Intent(context, AlarmActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
             putExtra(Constants.EXTRA_MEMO_ID, memoId)
@@ -121,13 +121,21 @@ class AlarmReceiver : BroadcastReceiver() {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
+        // 通知内容：HarmonyOS 拦截全屏弹窗,改为让通知本身承担主要提醒职责
+        // - BigTextStyle: 展开后显示完整内容
+        // - VISIBILITY_PUBLIC: 锁屏可见完整内容
+        // - PRIORITY_MAX + CATEGORY_ALARM: 重要级别,横幅 + 铃声 + 震动
         val notification = NotificationCompat.Builder(context, Constants.CHANNEL_REMINDER)
             .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(title)
             .setContentText(content)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(content).setBigContentTitle(title))
             .setPriority(NotificationCompat.PRIORITY_MAX)
             .setCategory(NotificationCompat.CATEGORY_ALARM)
-            .setFullScreenIntent(fullScreenPendingIntent, true)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            .setShowWhen(true)
+            .setFullScreenIntent(fullScreenPendingIntent, true)  // 兜底:部分 ROM 可能支持
+            .setContentIntent(fullScreenPendingIntent)            // 主操作:点击通知正文进全屏
             .setOngoing(true)
             .setAutoCancel(false)
             .setTimeoutAfter(0)
