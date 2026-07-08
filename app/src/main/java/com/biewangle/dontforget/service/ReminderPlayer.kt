@@ -15,14 +15,16 @@ import com.biewangle.dontforget.R
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class ReminderPlayer(private val context: Context) {
 
-    // 协程作用域：生命周期绑定到 ReminderPlayer 实例，stop() 时取消避免泄漏
+    // 协程作用域：生命周期绑定到 ReminderPlayer 实例，stop() 时取消并重建，
+    // 保证后续 startVibration() 能挂到未被取消的 Job 上（修复震动丢失 bug）
     private var scopeJob = Job()
-    private val playerScope = CoroutineScope(scopeJob + Dispatchers.IO)
+    private var playerScope = CoroutineScope(scopeJob + Dispatchers.IO)
 
     private var mediaPlayer: MediaPlayer? = null
     private var loopHandler: android.os.Handler? = null
@@ -230,9 +232,11 @@ class ReminderPlayer(private val context: Context) {
     }
 
     fun stop() {
-        // 取消所有正在执行的协程（避免设置读取尚未完成时泄漏）
-        scopeJob.cancel()
+        // 取消当前 playerScope 并重建一个新的（不能只替换 scopeJob 属性，
+        // 否则 playerScope 仍持有旧 Job 引用，后续 launch 会挂在已取消的 Job 上）
+        playerScope.cancel()
         scopeJob = Job()
+        playerScope = CoroutineScope(scopeJob + Dispatchers.IO)
         stopVibration()
 
         loopHandler?.removeCallbacks(loopRunnable ?: return)
