@@ -1,5 +1,8 @@
 package com.biewangle.dontforget.ui.screens.memo
 
+import android.content.ComponentName
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -18,26 +21,35 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.biewangle.dontforget.BiewangleApp
 import com.biewangle.dontforget.ui.theme.scaledSp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
@@ -60,6 +72,24 @@ fun MemoScreen(
     val memoGroups by viewModel.memoGroups.collectAsState()
     val showForm by viewModel.showForm.collectAsState()
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    var showAutoStartDialog by remember { mutableStateOf(false) }
+
+    // 监听保存完成事件，首次显示自启动引导
+    LaunchedEffect(Unit) {
+        viewModel.memoSaved.collect {
+            val shown = context.getSharedPreferences("settings", android.content.Context.MODE_PRIVATE)
+                .getBoolean("auto_start_guide_shown", false)
+            if (!shown) {
+                showAutoStartDialog = true
+                context.getSharedPreferences("settings", android.content.Context.MODE_PRIVATE)
+                    .edit()
+                    .putBoolean("auto_start_guide_shown", true)
+                    .apply()
+            }
+        }
+    }
 
     Box(modifier = Modifier.fillMaxSize()) {
         // 主内容
@@ -208,5 +238,52 @@ fun MemoScreen(
         ) {
             AddMemoSheet(viewModel = viewModel)
         }
+    }
+
+    // 自启动引导对话框
+    if (showAutoStartDialog) {
+        AlertDialog(
+            onDismissRequest = { showAutoStartDialog = false },
+            title = { Text("⚠️ 确保提醒功能正常", fontSize = scaledSp(22)) },
+            text = {
+                Text(
+                    "为了确保提醒功能正常工作，请开启「别忘乐」的自启动权限。" +
+                    "否则提醒可能被系统阻止，导致无法及时通知您。",
+                    fontSize = scaledSp(18)
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    showAutoStartDialog = false
+                    // 尝试跳转到 MagicOS 自启动设置页面
+                    try {
+                        val intent = Intent().apply {
+                            component = ComponentName(
+                                "com.hihonor.systemmanager",
+                                "com.hihonor.permissionmanager.activity.autostart.AutoStartManagementActivity"
+                            )
+                            flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                        }
+                        context.startActivity(intent)
+                    } catch (e: Exception) {
+                        // 如果 MagicOS 跳转失败，尝试通用应用设置
+                        try {
+                            val intent = Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                                data = Uri.fromParts("package", context.packageName, null)
+                                flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                            }
+                            context.startActivity(intent)
+                        } catch (_: Exception) {}
+                    }
+                }) {
+                    Text("去开启", fontSize = scaledSp(20), color = PrimaryOrange)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showAutoStartDialog = false }) {
+                    Text("暂不", fontSize = scaledSp(20))
+                }
+            }
+        )
     }
 }

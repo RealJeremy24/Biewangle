@@ -174,7 +174,7 @@ fun SettingsScreen(
 
         // 版本信息
         Text(
-            text = "冲凉最舒适 v1.0",
+            text = "别忘乐 v1.0",
             fontSize = scaledSp(16),
             color = TextWarmGray,
             textAlign = TextAlign.Center,

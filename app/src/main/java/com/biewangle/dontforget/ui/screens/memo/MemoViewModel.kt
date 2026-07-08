@@ -10,7 +10,9 @@ import com.biewangle.dontforget.data.repository.MemoRepository
 import com.biewangle.dontforget.service.AlarmScheduler
 import com.biewangle.dontforget.util.DateTimeUtils
 import com.biewangle.dontforget.util.TemplateItem
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
@@ -53,6 +55,10 @@ class MemoViewModel(
 
     private val _showForm = MutableStateFlow(false)
     val showForm: StateFlow<Boolean> = _showForm.asStateFlow()
+
+    // 保存完成事件（用于触发自启动引导）
+    private val _memoSaved = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+    val memoSaved: SharedFlow<Unit> = _memoSaved
 
     init {
         viewModelScope.launch {
@@ -169,6 +175,7 @@ class MemoViewModel(
             }
 
             _showForm.value = false
+            _memoSaved.tryEmit(Unit)
         }
     }
 

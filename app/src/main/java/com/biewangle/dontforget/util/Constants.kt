@@ -27,6 +27,7 @@ object Constants {
     const val KEY_LARGE_TEXT_MODE = "large_text_mode"
     const val KEY_VIBRATE_ENABLED = "vibrate_enabled"
     const val KEY_FONT_SCALE = "font_scale"
+    const val KEY_AUTO_START_GUIDE_SHOWN = "auto_start_guide_shown"
 
     // 快捷模板
     val QUICK_TEMPLATES = listOf(

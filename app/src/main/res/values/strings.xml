@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">别忘了</string>
+    <string name="app_name">别忘乐</string>
     <string name="tab_memo">📝 事项</string>
     <string name="tab_mine">📊 我的</string>
     <string name="quick_add">快捷添加</string>
@@ -48,5 +48,5 @@
     <string name="trim_preview">▶ 试听片段</string>
     <string name="notification_channel_reminder">提醒通知</string>
     <string name="notification_channel_service">提醒服务</string>
-    <string name="version">别忘了 v1.0</string>
+    <string name="version">别忘乐 v1.0</string>
 </resources>

@@ -55,4 +55,13 @@ class SettingsRepository(private val settingsDao: SettingsDao) {
     suspend fun setLargeTextMode(enabled: Boolean) {
         setFontScale(if (enabled) 1.2f else 1.0f)
     }
+
+    // ── 自启动引导是否已显示过 ──
+    suspend fun getAutoStartGuideShown(): Boolean {
+        return settingsDao.getValue(Constants.KEY_AUTO_START_GUIDE_SHOWN)?.toBoolean() ?: false
+    }
+
+    suspend fun setAutoStartGuideShown(shown: Boolean) {
+        settingsDao.insert(SettingsEntity(Constants.KEY_AUTO_START_GUIDE_SHOWN, shown.toString()))
+    }
 }

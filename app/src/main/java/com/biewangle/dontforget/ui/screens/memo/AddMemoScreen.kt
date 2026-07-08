@@ -3,7 +3,6 @@ package com.biewangle.dontforget.ui.screens.memo
 import android.content.Intent
 import android.net.Uri
 import android.provider.OpenableColumns
-import android.speech.RecognizerIntent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -79,17 +78,6 @@ fun AddMemoSheet(viewModel: MemoViewModel) {
     var ringtoneDisplayName by remember { mutableStateOf("默认铃声（冲凉最舒适）") }
     var isUsingDefaultRingtone by remember { mutableStateOf(true) }
 
-    // 语音识别
-    val speechLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.StartActivityForResult()
-    ) { result ->
-        if (result.resultCode == android.app.Activity.RESULT_OK) {
-            result.data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
-                ?.firstOrNull()
-                ?.let { viewModel.updateContent(it) }
-        }
-    }
-
     // 铃声文件选择器（从 RingtonePickerDialog 中触发）
     val ringtoneFilePicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -148,40 +136,22 @@ fun AddMemoSheet(viewModel: MemoViewModel) {
             color = TextDarkBrown,
             modifier = Modifier.padding(bottom = 8.dp)
         )
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            TextField(
-                value = formState.title,
-                onValueChange = { viewModel.updateTitle(it) },
-                placeholder = { Text("例如：吃降压药", fontSize = scaledSp(20)) },
-                modifier = Modifier
-                    .weight(1f)
-                    .height(64.dp),
-                textStyle = androidx.compose.ui.text.TextStyle(fontSize = scaledSp(22)),
-                colors = TextFieldDefaults.colors(
-                    focusedContainerColor = CardWhite,
-                    unfocusedContainerColor = CardWhite,
-                    focusedIndicatorColor = PrimaryOrange,
-                    cursorColor = PrimaryOrange
-                ),
-                shape = RoundedCornerShape(12.dp)
-            )
-            Spacer(Modifier.width(8.dp))
-            IconButton(
-                onClick = {
-                    val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
-                        putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
-                        putExtra(RecognizerIntent.EXTRA_LANGUAGE, "zh-CN")
-                        putExtra(RecognizerIntent.EXTRA_PROMPT, "说出事项内容…")
-                    }
-                    try { speechLauncher.launch(intent) } catch (_: Exception) {}
-                },
-                modifier = Modifier
-                    .background(PrimaryOrange, RoundedCornerShape(12.dp))
-                    .height(64.dp)
-            ) {
-                Text("🎤", fontSize = 28.sp)
-            }
-        }
+        TextField(
+            value = formState.title,
+            onValueChange = { viewModel.updateTitle(it) },
+            placeholder = { Text("例如：吃降压药", fontSize = scaledSp(20)) },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(64.dp),
+            textStyle = androidx.compose.ui.text.TextStyle(fontSize = scaledSp(22)),
+            colors = TextFieldDefaults.colors(
+                focusedContainerColor = CardWhite,
+                unfocusedContainerColor = CardWhite,
+                focusedIndicatorColor = PrimaryOrange,
+                cursorColor = PrimaryOrange
+            ),
+            shape = RoundedCornerShape(12.dp)
+        )
 
         Spacer(Modifier.height(16.dp))
 
