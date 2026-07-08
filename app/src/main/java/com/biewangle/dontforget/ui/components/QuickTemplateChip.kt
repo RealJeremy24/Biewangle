@@ -15,6 +15,7 @@ import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -25,6 +26,7 @@ import com.biewangle.dontforget.ui.theme.TextDarkBrown
 import com.biewangle.dontforget.ui.theme.WhiteText
 import com.biewangle.dontforget.ui.theme.scaledSp
 import com.biewangle.dontforget.util.Constants
+import com.biewangle.dontforget.util.SoundEffectPlayer
 import com.biewangle.dontforget.util.TemplateItem
 
 @Composable
@@ -58,9 +60,13 @@ private fun TemplateChip(
     template: TemplateItem,
     onClick: () -> Unit
 ) {
+    val context = LocalContext.current
     FilterChip(
         selected = false,
-        onClick = onClick,
+        onClick = {
+            SoundEffectPlayer.playButtonClick(context)
+            onClick()
+        },
         label = {
             Text(
                 text = template.label,

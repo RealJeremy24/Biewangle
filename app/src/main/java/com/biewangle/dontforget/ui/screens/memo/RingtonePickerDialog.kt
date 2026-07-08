@@ -16,6 +16,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -26,6 +27,7 @@ import com.biewangle.dontforget.ui.theme.PrimaryOrange
 import com.biewangle.dontforget.ui.theme.TextDarkBrown
 import com.biewangle.dontforget.ui.theme.TextWarmGray
 import com.biewangle.dontforget.ui.theme.scaledSp
+import com.biewangle.dontforget.util.SoundEffectPlayer
 
 /**
  * 铃声选择弹窗：
@@ -43,6 +45,7 @@ fun RingtonePickerDialog(
     onPickFile: () -> Unit,
     onDismiss: () -> Unit
 ) {
+    val context = LocalContext.current
     Dialog(onDismissRequest = onDismiss) {
         Column(
             modifier = Modifier
@@ -66,6 +69,7 @@ fun RingtonePickerDialog(
                 title = "默认铃声（冲凉最舒适）",
                 isSelected = isUsingDefault,
                 onClick = {
+                    SoundEffectPlayer.playButtonClick(context)
                     onSelectDefault()
                     onDismiss()
                 }
@@ -80,6 +84,7 @@ fun RingtonePickerDialog(
                     title = currentDisplayName,
                     isSelected = !isUsingDefault,
                     onClick = {
+                        SoundEffectPlayer.playButtonClick(context)
                         onSelectCustom()
                         onDismiss()
                     }
@@ -102,6 +107,7 @@ fun RingtonePickerDialog(
                     .height(52.dp)
                     .background(CardWhite, RoundedCornerShape(12.dp))
                     .clickable {
+                        SoundEffectPlayer.playButtonClick(context)
                         onPickFile()
                         onDismiss()
                     },
@@ -125,7 +131,10 @@ fun RingtonePickerDialog(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable { onDismiss() },
+                    .clickable {
+                        SoundEffectPlayer.playButtonClick(context)
+                        onDismiss()
+                    },
                 contentAlignment = Alignment.Center
             ) {
                 TextButton(onClick = onDismiss) {

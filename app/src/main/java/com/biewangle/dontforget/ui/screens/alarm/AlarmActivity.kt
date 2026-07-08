@@ -54,6 +54,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -79,6 +80,7 @@ import com.biewangle.dontforget.ui.theme.WhiteText
 import com.biewangle.dontforget.ui.theme.scaledSp
 import com.biewangle.dontforget.ui.theme.BiewangleTheme
 import com.biewangle.dontforget.util.Constants
+import com.biewangle.dontforget.util.SoundEffectPlayer
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -493,6 +495,7 @@ private fun SlideToDismissButton(
 ) {
     val configuration = LocalConfiguration.current
     val density = LocalDensity.current
+    val context = LocalContext.current
     val trackHeight = 72.dp
     val thumbSize = 60.dp
 
@@ -562,6 +565,7 @@ private fun SlideToDismissButton(
                         coroutineScope.launch {
                             offsetX.snapTo(newValue)
                             if (newValue >= maxOffset * 0.95f) {
+                                SoundEffectPlayer.playButtonClick(context)
                                 onDismiss()
                             }
                         }
@@ -588,6 +592,7 @@ private fun GlassSnoozeButton(
     text: String,
     onClick: () -> Unit
 ) {
+    val context = LocalContext.current
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -603,7 +608,10 @@ private fun GlassSnoozeButton(
                 color = WhiteText.copy(alpha = 0.7f),
                 shape = RoundedCornerShape(28.dp)
             )
-            .clickable(onClick = onClick),
+            .clickable {
+                SoundEffectPlayer.playButtonClick(context)
+                onClick()
+            },
         contentAlignment = Alignment.Center
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {

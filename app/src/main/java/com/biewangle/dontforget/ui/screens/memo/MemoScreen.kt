@@ -62,6 +62,7 @@ import com.biewangle.dontforget.ui.theme.PrimaryOrange
 import com.biewangle.dontforget.ui.theme.TextDarkBrown
 import com.biewangle.dontforget.ui.theme.TextWarmGray
 import com.biewangle.dontforget.ui.theme.WhiteText
+import com.biewangle.dontforget.util.SoundEffectPlayer
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -213,7 +214,10 @@ fun MemoScreen(
 
         // 浮动添加按钮
         FloatingActionButton(
-            onClick = { viewModel.showNewForm() },
+            onClick = {
+                SoundEffectPlayer.playButtonClick(context)
+                viewModel.showNewForm()
+            },
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .padding(bottom = 16.dp),
@@ -254,6 +258,7 @@ fun MemoScreen(
             },
             confirmButton = {
                 TextButton(onClick = {
+                    SoundEffectPlayer.playButtonClick(context)
                     showAutoStartDialog = false
                     // 尝试跳转到 MagicOS 自启动设置页面
                     try {
@@ -280,7 +285,10 @@ fun MemoScreen(
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showAutoStartDialog = false }) {
+                TextButton(onClick = {
+                    SoundEffectPlayer.playButtonClick(context)
+                    showAutoStartDialog = false
+                }) {
                     Text("暂不", fontSize = scaledSp(20))
                 }
             }

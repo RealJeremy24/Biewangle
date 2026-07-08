@@ -12,9 +12,17 @@ import android.os.VibratorManager
 import android.provider.Settings
 import com.biewangle.dontforget.BiewangleApp
 import com.biewangle.dontforget.R
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class ReminderPlayer(private val context: Context) {
+
+    // 协程作用域：生命周期绑定到 ReminderPlayer 实例，stop() 时取消避免泄漏
+    private var scopeJob = Job()
+    private val playerScope = CoroutineScope(scopeJob + Dispatchers.IO)
 
     private var mediaPlayer: MediaPlayer? = null
     private var loopHandler: android.os.Handler? = null
@@ -37,39 +45,38 @@ class ReminderPlayer(private val context: Context) {
     private var isVibrating = false
 
     fun startLooping(useCustomRingtone: Boolean = true) {
-        val uri: Uri
-        var startMs = 0L
-        var endMs = 30000L
-
         if (useCustomRingtone) {
-            val config = runBlocking {
-                BiewangleApp.instance.settingsRepository.getRingtoneConfig()
-            }
+            // 异步加载铃声配置，避免 runBlocking 阻塞主线程
+            playerScope.launch {
+                val config = BiewangleApp.instance.settingsRepository.getRingtoneConfig()
 
-            uri = if (config.uri.isNotEmpty()) {
-                Uri.parse(config.uri)
-            } else {
-                // 使用 App 内置默认铃声
-                Uri.parse("android.resource://${context.packageName}/${R.raw.biewangle}")
-            }
+                val uri = if (config.uri.isNotEmpty()) {
+                    Uri.parse(config.uri)
+                } else {
+                    // 使用 App 内置默认铃声
+                    Uri.parse("android.resource://${context.packageName}/${R.raw.biewangle}")
+                }
 
-            startMs = config.trimStartMs
-            endMs = config.trimEndMs
+                val startMs = config.trimStartMs
+                val endMs = if (config.trimEndMs > 0) config.trimEndMs else 30000L
+
+                trimStartMs = startMs
+                trimEndMs = endMs
+
+                withContext(Dispatchers.Main) {
+                    startPlayback(uri, loop = true)
+                    startVibration()
+                }
+            }
         } else {
-            // 使用系统默认闹钟铃声
-            uri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
+            // 使用系统默认闹钟铃声，无需读数据库，同步启动即可
+            val uri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
                 ?: Settings.System.DEFAULT_ALARM_ALERT_URI
-            startMs = 0L
-            endMs = 0L
+            trimStartMs = 0L
+            trimEndMs = 0L
+            startPlayback(uri, loop = true)
+            startVibration()
         }
-
-        trimStartMs = startMs
-        trimEndMs = if (endMs > 0) endMs else 30000L
-
-        startPlayback(uri, loop = true)
-
-        // 启动震动
-        startVibration()
     }
 
     fun startPreview(uri: Uri, startMs: Long, endMs: Long) {
@@ -135,10 +142,16 @@ class ReminderPlayer(private val context: Context) {
     }
 
     private fun startVibration() {
-        val vibrateEnabled = runBlocking {
-            BiewangleApp.instance.settingsRepository.getVibrateEnabled()
+        // 异步读取震动设置，避免 runBlocking 阻塞主线程
+        playerScope.launch {
+            val vibrateEnabled = BiewangleApp.instance.settingsRepository.getVibrateEnabled()
+            if (!vibrateEnabled) return@launch
+            withContext(Dispatchers.Main) { doStartVibration() }
         }
-        if (!vibrateEnabled) return
+    }
+
+    /** 必须在主线程调用（Vibrator 操作） */
+    private fun doStartVibration() {
 
         try {
             // 循环震动模式：震动 500ms + 暂停 500ms
@@ -198,6 +211,9 @@ class ReminderPlayer(private val context: Context) {
     }
 
     fun stop() {
+        // 取消所有正在执行的协程（避免设置读取尚未完成时泄漏）
+        scopeJob.cancel()
+        scopeJob = Job()
         stopVibration()
 
         loopHandler?.removeCallbacks(loopRunnable ?: return)

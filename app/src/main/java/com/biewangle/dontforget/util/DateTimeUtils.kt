@@ -4,6 +4,7 @@ import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
+import java.util.TimeZone
 
 object DateTimeUtils {
 
@@ -62,6 +63,39 @@ object DateTimeUtils {
         cal.set(Calendar.SECOND, 59)
         cal.set(Calendar.MILLISECOND, 999)
         return cal.timeInMillis
+    }
+
+    /**
+     * 获取 UTC 当天0点的时间戳。
+     * Material 3 DatePicker 使用 UTC 零点表示日期，
+     * 初始化 DatePickerState 时必须传 UTC 零点，否则高亮会偏一天。
+     */
+    fun getUtcStartOfDay(timestamp: Long): Long {
+        val cal = Calendar.getInstance(TimeZone.getTimeZone("UTC"))
+        cal.timeInMillis = timestamp
+        cal.set(Calendar.HOUR_OF_DAY, 0)
+        cal.set(Calendar.MINUTE, 0)
+        cal.set(Calendar.SECOND, 0)
+        cal.set(Calendar.MILLISECOND, 0)
+        return cal.timeInMillis
+    }
+
+    /**
+     * 将任意时间戳转为对应日历日期的 UTC 零点毫秒值。
+     * 用于兼容旧数据（本地零点存储）和新数据（UTC 零点存储），
+     * 确保传给 DatePicker 的初始值始终是 UTC 零点。
+     */
+    fun toUtcMidnight(timestamp: Long): Long {
+        val cal = Calendar.getInstance()
+        cal.timeInMillis = timestamp
+        val year = cal.get(Calendar.YEAR)
+        val month = cal.get(Calendar.MONTH)
+        val day = cal.get(Calendar.DAY_OF_MONTH)
+
+        val utcCal = Calendar.getInstance(TimeZone.getTimeZone("UTC"))
+        utcCal.clear()
+        utcCal.set(year, month, day)
+        return utcCal.timeInMillis
     }
 
     /** 根据日期和时分创建时间戳 */

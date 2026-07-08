@@ -6,7 +6,9 @@
       "Bash(find /c/Users/11447 -maxdepth 5 -name \"adb.exe\" 2>/dev/null; find /d -maxdepth 4 -name \"adb.exe\" 2>/dev/null)",
       "Read(//c/Users/11447/**)",
       "Bash(\"/d/Android/Sdk/platform-tools/adb\" install *)",
-      "Bash(git add *)"
+      "Bash(git add *)",
+      "Bash(git commit -m 'v1.3: 字体默认档位+弹窗UI优化+mama2图片 *)",
+      "Bash(git -C \"d:/Desktop/Biewangle\" log --oneline -10)"
     ]
   }
 }

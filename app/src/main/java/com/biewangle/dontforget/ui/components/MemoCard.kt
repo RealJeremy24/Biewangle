@@ -18,6 +18,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -29,6 +30,7 @@ import com.biewangle.dontforget.ui.theme.TextDarkBrown
 import com.biewangle.dontforget.ui.theme.TextWarmGray
 import com.biewangle.dontforget.ui.theme.scaledSp
 import com.biewangle.dontforget.util.DateTimeUtils
+import com.biewangle.dontforget.util.SoundEffectPlayer
 
 @Composable
 fun MemoCard(
@@ -38,20 +40,27 @@ fun MemoCard(
     modifier: Modifier = Modifier
 ) {
     val alpha = if (memo.isCompleted) 0.5f else 1f
+    val context = LocalContext.current
 
     Row(
         modifier = modifier
             .fillMaxWidth()
             .height(80.dp)
             .background(CardWhite, RoundedCornerShape(12.dp))
-            .clickable { onClick() }
+            .clickable {
+                SoundEffectPlayer.playButtonClick(context)
+                onClick()
+            }
             .padding(horizontal = 8.dp, vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         // 完成复选框
         Checkbox(
             checked = memo.isCompleted,
-            onCheckedChange = { onToggleComplete() },
+            onCheckedChange = {
+                SoundEffectPlayer.playButtonClick(context)
+                onToggleComplete()
+            },
             colors = CheckboxDefaults.colors(
                 checkedColor = CompletedGreen,
                 uncheckedColor = TextWarmGray

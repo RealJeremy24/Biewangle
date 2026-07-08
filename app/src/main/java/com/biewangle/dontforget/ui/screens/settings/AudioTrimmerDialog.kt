@@ -38,6 +38,7 @@ import com.biewangle.dontforget.ui.theme.TextDarkBrown
 import com.biewangle.dontforget.ui.theme.TextWarmGray
 import com.biewangle.dontforget.ui.theme.WhiteText
 import com.biewangle.dontforget.ui.theme.scaledSp
+import com.biewangle.dontforget.util.SoundEffectPlayer
 
 @Composable
 fun AudioTrimmerDialog(
@@ -156,6 +157,7 @@ fun AudioTrimmerDialog(
                 // 试听按钮
                 Button(
                     onClick = {
+                        SoundEffectPlayer.playButtonClick(context)
                         if (isPreviewPlaying) {
                             previewPlayer?.stop()
                             previewPlayer = null
@@ -190,6 +192,7 @@ fun AudioTrimmerDialog(
                 // 保存按钮
                 Button(
                     onClick = {
+                        SoundEffectPlayer.playButtonClick(context)
                         previewPlayer?.stop()
                         onSave(trimStartMs.toLong(), trimEndMs.toLong())
                     },

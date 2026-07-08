@@ -9,6 +9,7 @@ import com.biewangle.dontforget.data.model.RepeatType
 import com.biewangle.dontforget.data.repository.MemoRepository
 import com.biewangle.dontforget.service.AlarmScheduler
 import com.biewangle.dontforget.util.DateTimeUtils
+import java.util.Calendar
 import com.biewangle.dontforget.util.TemplateItem
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -28,10 +29,10 @@ data class MemoFormState(
     val id: Long = 0,
     val title: String = "",
     val content: String = "",
-    val targetDate: Long = DateTimeUtils.getStartOfDay(DateTimeUtils.now()),
+    val targetDate: Long = DateTimeUtils.getUtcStartOfDay(DateTimeUtils.now()),
     val reminderEnabled: Boolean = false,
-    val reminderHour: Int = 9,
-    val reminderMinute: Int = 0,
+    val reminderHour: Int = Calendar.getInstance().get(Calendar.HOUR_OF_DAY),
+    val reminderMinute: Int = Calendar.getInstance().get(Calendar.MINUTE),
     val repeatType: RepeatType = RepeatType.NONE,
     val templateId: String? = null,
     val useCustomRingtone: Boolean = true
@@ -94,7 +95,7 @@ class MemoViewModel(
             id = memo.id,
             title = memo.title,
             content = memo.content,
-            targetDate = memo.targetDate,
+            targetDate = DateTimeUtils.toUtcMidnight(memo.targetDate),
             reminderEnabled = memo.reminderTime != null,
             reminderHour = cal.get(java.util.Calendar.HOUR_OF_DAY),
             reminderMinute = cal.get(java.util.Calendar.MINUTE),
@@ -118,7 +119,9 @@ class MemoViewModel(
     }
 
     fun updateDate(timestamp: Long) {
-        _formState.value = _formState.value.copy(targetDate = DateTimeUtils.getStartOfDay(timestamp))
+        // DatePicker 返回的是 UTC 零点毫秒值，原样存储，
+        // 不要用 getStartOfDay 转换（会导致再次打开 DatePicker 时高亮偏一天）
+        _formState.value = _formState.value.copy(targetDate = timestamp)
     }
 
     fun toggleReminder(enabled: Boolean) {

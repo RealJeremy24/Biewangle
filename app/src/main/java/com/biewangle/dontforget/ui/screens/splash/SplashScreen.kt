@@ -44,6 +44,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.biewangle.dontforget.R
 import com.biewangle.dontforget.ui.theme.scaledSp
+import com.biewangle.dontforget.util.SoundEffectPlayer
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -64,6 +65,7 @@ fun SplashScreen(
     onSplashFinished: () -> Unit
 ) {
     val density = LocalDensity.current
+    val context = androidx.compose.ui.platform.LocalContext.current
     var isFinished by remember { mutableStateOf(false) }
     var showAccents by remember { mutableStateOf(false) }
     var showAppUi by remember { mutableStateOf(false) }
@@ -172,6 +174,7 @@ fun SplashScreen(
                 .background(Color.Black.copy(alpha = 0.35f))
                 .clickable {
                     if (!isFinished) {
+                        SoundEffectPlayer.playButtonClick(context)
                         isFinished = true
                         onSplashFinished()
                     }
@@ -207,8 +210,7 @@ fun SplashScreen(
                         ambientColor = Color.Black.copy(alpha = 0.18f),
                         spotColor = Color.Black.copy(alpha = 0.18f)
                     )
-                    .clip(CircleShape)
-                    .background(Color.White),
+                    .clip(CircleShape),
                 contentAlignment = Alignment.Center
             ) {
                 // ── 真实照片层 ──

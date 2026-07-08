@@ -8,10 +8,12 @@ import com.biewangle.dontforget.data.db.AppDatabase
 import com.biewangle.dontforget.data.repository.MemoRepository
 import com.biewangle.dontforget.data.repository.SettingsRepository
 import com.biewangle.dontforget.util.Constants
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.launch
 
 class BiewangleApp : Application() {
 
@@ -34,9 +36,11 @@ class BiewangleApp : Application() {
         instance = this
         createNotificationChannels()
 
-        // 从数据库加载初始字体缩放值
-        val saved = runBlocking { settingsRepository.getFontScale() }
-        _fontScaleFlow.value = saved
+        // 从数据库异步加载初始字体缩放值，避免阻塞主线程
+        CoroutineScope(Dispatchers.IO).launch {
+            val saved = settingsRepository.getFontScale()
+            _fontScaleFlow.value = saved
+        }
     }
 
     private fun createNotificationChannels() {

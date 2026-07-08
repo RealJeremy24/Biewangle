@@ -8,12 +8,14 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.biewangle.dontforget.ui.theme.PrimaryOrange
 import com.biewangle.dontforget.ui.theme.WhiteText
 import com.biewangle.dontforget.ui.theme.scaledSp
+import com.biewangle.dontforget.util.SoundEffectPlayer
 
 /**
  * 大号主按钮组件（最小64dp高，宽填满）
@@ -27,8 +29,12 @@ fun LargeButton(
     textColor: Color = WhiteText,
     height: Int = 64
 ) {
+    val context = LocalContext.current
     Button(
-        onClick = onClick,
+        onClick = {
+            SoundEffectPlayer.playButtonClick(context)
+            onClick()
+        },
         modifier = modifier
             .fillMaxWidth()
             .height(height.dp),

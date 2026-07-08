@@ -34,6 +34,7 @@ import androidx.compose.material3.TimePickerDefaults
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -62,6 +63,7 @@ import com.biewangle.dontforget.ui.theme.TextWarmGray
 import com.biewangle.dontforget.ui.theme.WhiteText
 import com.biewangle.dontforget.ui.theme.scaledSp
 import com.biewangle.dontforget.util.DateTimeUtils
+import com.biewangle.dontforget.util.SoundEffectPlayer
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -191,7 +193,10 @@ fun AddMemoSheet(viewModel: MemoViewModel) {
                 .fillMaxWidth()
                 .height(64.dp)
                 .background(CardWhite, RoundedCornerShape(12.dp))
-                .clickable { showDatePicker = true }
+                .clickable {
+                    SoundEffectPlayer.playButtonClick(context)
+                    showDatePicker = true
+                }
                 .padding(horizontal = 16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -231,7 +236,10 @@ fun AddMemoSheet(viewModel: MemoViewModel) {
                     fontSize = scaledSp(22),
                     color = PrimaryOrange,
                     modifier = Modifier
-                        .clickable { showTimePicker = true }
+                        .clickable {
+                            SoundEffectPlayer.playButtonClick(context)
+                            showTimePicker = true
+                        }
                         .padding(horizontal = 12.dp)
                 )
             }
@@ -272,7 +280,10 @@ fun AddMemoSheet(viewModel: MemoViewModel) {
                     fontSize = scaledSp(18),
                     color = PrimaryOrange,
                     modifier = Modifier
-                        .clickable { showRingtoneDialog = true }
+                        .clickable {
+                            SoundEffectPlayer.playButtonClick(context)
+                            showRingtoneDialog = true
+                        }
                         .padding(horizontal = 8.dp)
                 )
                 Switch(
@@ -312,7 +323,10 @@ fun AddMemoSheet(viewModel: MemoViewModel) {
                             if (selected) ChipSelected else ChipUnselected,
                             RoundedCornerShape(12.dp)
                         )
-                        .clickable { viewModel.updateRepeatType(type) },
+                        .clickable {
+                            SoundEffectPlayer.playButtonClick(context)
+                            viewModel.updateRepeatType(type)
+                        },
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
@@ -335,7 +349,10 @@ fun AddMemoSheet(viewModel: MemoViewModel) {
                 .fillMaxWidth()
                 .height(64.dp)
                 .background(PrimaryOrange, RoundedCornerShape(16.dp))
-                .clickable { viewModel.saveMemo() },
+                .clickable {
+                    SoundEffectPlayer.playButtonClick(context)
+                    viewModel.saveMemo()
+                },
             contentAlignment = Alignment.Center
         ) {
             Text(
@@ -356,6 +373,7 @@ fun AddMemoSheet(viewModel: MemoViewModel) {
                     .height(64.dp)
                     .background(AlertOrangeRed, RoundedCornerShape(16.dp))
                     .clickable {
+                        SoundEffectPlayer.playButtonClick(context)
                         viewModel.deleteMemo(formState.id)
                         viewModel.hideForm()
                     },
@@ -383,12 +401,16 @@ fun AddMemoSheet(viewModel: MemoViewModel) {
             onDismissRequest = { showDatePicker = false },
             confirmButton = {
                 TextButton(onClick = {
+                    SoundEffectPlayer.playButtonClick(context)
                     datePickerState.selectedDateMillis?.let { viewModel.updateDate(it) }
                     showDatePicker = false
                 }) { Text("确定", fontSize = scaledSp(22)) }
             },
             dismissButton = {
-                TextButton(onClick = { showDatePicker = false }) { Text("取消", fontSize = scaledSp(22)) }
+                TextButton(onClick = {
+                    SoundEffectPlayer.playButtonClick(context)
+                    showDatePicker = false
+                }) { Text("取消", fontSize = scaledSp(22)) }
             }
         ) {
             DatePicker(
@@ -421,6 +443,11 @@ fun AddMemoSheet(viewModel: MemoViewModel) {
             initialMinute = formState.reminderMinute,
             is24Hour = true
         )
+        // 时间拨动音效：监听 hour/minute 变化
+        LaunchedEffect(timePickerState.hour, timePickerState.minute) {
+            SoundEffectPlayer.playTimeScroll(context)
+        }
+
         TimePickerDialog(
             onDismiss = { showTimePicker = false },
             onConfirm = {
