@@ -51,9 +51,10 @@ import kotlin.math.roundToInt
 
 /**
  * 开场动画时间线：
- *   0.0s – 2.1s   一次性减速 Y 轴旋转 0→1080°（3 整圈，落在正面，越转越慢）
- *   1.45s – 2.1s  收尾期真实照片→卡通头像交叉淡入淡出
- *   2.1s – 2.45s  弹跳放大效果
+ *   0.0s – 2.2s   真实照片旋转入场 0→1080°（3 整圈，慢起步→加速→减速停正面）
+ *   2.2s – 2.6s   真实照片定格
+ *   2.6s – 3.2s   原地交叉淡入：真实照片 → 卡通头像
+ *   3.2s – 3.55s  弹跳放大效果
  *   2.1s          装饰 emoji 陆续出现（💚 ✨）
  *   2.3s          「欢迎回来」标签淡入
  *   3.6s          底部白色面板滑入 + 加载指示圆点
@@ -89,27 +90,26 @@ fun SplashScreen(
 
     // ── 动画编排 ──
     LaunchedEffect(Unit) {
-        // ═══ 阶段 1：一次性减速旋转 0→1080°（3 整圈，~2.1s）+ 收尾交叉淡入 ═══
+        // ═══ 阶段 1：真实照片旋转入场 0→1080°（3 整圈，慢起步→加速→减速停正面）═══
+        spinRotation.animateTo(
+            targetValue = 1080f,  // 落在正面：停住即真实照片正面朝向
+            animationSpec = tween(
+                durationMillis = 2200,
+                // 对称 S 形：慢慢起步 → 中段加快 → 尾部减速停住
+                easing = CubicBezierEasing(0.5f, 0f, 0.5f, 1f)
+            )
+        )
+
+        // ═══ 阶段 2：真实照片停在正面，定格一下让人看清 ═══
+        delay(400)
+
+        // ═══ 阶段 3：过渡到卡通头像（原地交叉淡入，不再旋转）═══
         coroutineScope {
-            launch {
-                spinRotation.animateTo(
-                    targetValue = 1080f,  // 3 × 360°，落在正面（非镜像）
-                    animationSpec = tween(
-                        durationMillis = 2100,
-                        // 起手快、尾部强力减速：观感≈2.5圈快转+缓缓定住
-                        easing = CubicBezierEasing(0.12f, 0f, 0.2f, 1f)
-                    )
-                )
-            }
-            // 收尾最后 ~650ms 做照片→卡通交叉淡入（此时转速已很慢、接近正面）
-            launch {
-                delay(1450)
-                launch { photoAlpha.animateTo(0f, tween(650)) }
-                cartoonAlpha.animateTo(1f, tween(650))
-            }
+            launch { photoAlpha.animateTo(0f, tween(600)) }
+            launch { cartoonAlpha.animateTo(1f, tween(600)) }
         }
 
-        // ═══ 阶段 3：弹跳 + 装饰出现 (2.1s – 2.45s) ═══
+        // ═══ 阶段 4：弹跳 + 装饰出现 ═══
         showAccents = true
 
         // 弹跳效果：1.08 → 1.22 → 1.12
