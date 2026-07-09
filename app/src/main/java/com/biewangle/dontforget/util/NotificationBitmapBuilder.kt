@@ -6,30 +6,44 @@ import com.biewangle.dontforget.R
 
 /**
  * 运行时生成通知大图的工具类。
- * 合成图规格：绿色渐变背景 + 左侧圆形妈妈贴纸 + 右侧动态提醒文字。
- * 输出 2:1 宽高比 Bitmap，用于 NotificationCompat.BigPictureStyle。
+ *
+ * 合成图规格：
+ * - 暖橙→桃粉径向渐变背景 + 右上暖光晕 + 左下珊瑚暗角
+ * - 左侧 mama4 完整可见 (520×520)，双手+捧脸压在框框下边沿
+ * - 右上文字块 320×auto，标题 40px / 正文 18px，标题白色假粗 + 阴影
+ *
+ * 输出 900×560 Bitmap (≈1.6:1)，用于 NotificationCompat.BigPictureStyle。
  */
 object NotificationBitmapBuilder {
 
-    // Canvas 逻辑尺寸（px），2:1 宽高比
+    // Canvas 逻辑尺寸（px），从原 2:1 (900×450) 调整为 ≈1.6:1
     private const val W = 900f
-    private const val H = 450f
+    private const val H = 560f
 
-    // 布局参数
-    private const val PADDING = 40f
-    private const val STICKER_DIAMETER = 220f
-    private const val STICKER_CX = PADDING + STICKER_DIAMETER / 2f
-    private const val STICKER_CY = H / 2f
+    // 圆角半径
+    private const val CORNER_RADIUS = 28f
 
-    private const val TEXT_LEFT = PADDING + STICKER_DIAMETER + PADDING  // 300
-    private const val TEXT_MAX_WIDTH = W - TEXT_LEFT - PADDING           // 560
+    // 贴纸（mama4）等比缩放后的尺寸 — 完整可见
+    private const val STICKER_SIZE = 520f
+    private const val STICKER_LEFT = 20f
+    private const val STICKER_BOTTOM_OFFSET = 20f  // 超出框下沿 20px（西瓜以下微微伸到框外）
 
-    private const val TITLE_SIZE = 48f
-    private const val CONTENT_SIZE = 32f
+    // 文字块
+    private const val TEXT_RIGHT = 44f
+    private const val TEXT_TOP = 48f
+    private const val TEXT_WIDTH = 320f
 
-    // 绿色渐变：与妈妈贴纸背景一致
-    private val COLOR_LIGHT_GREEN = Color.rgb(0xB5, 0xE8, 0xB5)
-    private val COLOR_DEEP_GREEN = Color.rgb(0x4C, 0xAF, 0x50)
+    // 字号
+    private const val TITLE_SIZE = 40f
+    private const val CONTENT_SIZE = 18f
+
+    // 暖橙夕阳配色 — 与 colors.xml 中的 primary_orange / alert_orange_red 对齐
+    private val COLOR_TOP_LEFT = Color.rgb(0xFF, 0xB0, 0x88)     // #FFB088 桃粉
+    private val COLOR_MID = Color.rgb(0xFF, 0x8A, 0x65)          // #FF8A65 橙红
+    private val COLOR_BOTTOM_RIGHT = Color.rgb(0xE6, 0x7E, 0x22) // #E67E22 primary_orange
+
+    private val COLOR_HIGHLIGHT = Color.rgb(0xFF, 0xD2, 0x96)     // 右上暖光晕
+    private val COLOR_SHADOW = Color.rgb(0xD8, 0x43, 0x15)        // 左下珊瑚暗角 alert_orange_red
 
     /**
      * 生成通知大图 Bitmap。
@@ -42,85 +56,113 @@ object NotificationBitmapBuilder {
         val canvas = Canvas(bitmap)
 
         drawBackground(canvas)
+        drawDecorations(canvas)
         drawSticker(context, canvas)
         drawTextBlock(canvas, title, content)
 
         return bitmap
     }
 
-    // ── 绿色渐变背景（圆角矩形） ────────────────────────────────
+    // ── 暖橙夕阳背景（圆角矩形 + 多层径向叠加） ──────────────
 
     private fun drawBackground(canvas: Canvas) {
-        val radius = 24f
         val rect = RectF(0f, 0f, W, H)
 
-        // 圆角裁剪
         canvas.save()
         val clipPath = Path().apply {
-            addRoundRect(rect, radius, radius, Path.Direction.CW)
+            addRoundRect(rect, CORNER_RADIUS, CORNER_RADIUS, Path.Direction.CW)
         }
         canvas.clipPath(clipPath)
 
-        // 绿色渐变
-        val gradient = LinearGradient(
+        // 底层对角线渐变：桃粉 → 橙红 → 主橙
+        val baseGradient = LinearGradient(
             0f, 0f, W, H,
-            COLOR_LIGHT_GREEN, COLOR_DEEP_GREEN,
+            COLOR_TOP_LEFT, COLOR_BOTTOM_RIGHT,
             Shader.TileMode.CLAMP
         )
-        val paint = Paint().apply { shader = gradient }
-        canvas.drawRect(rect, paint)
+        canvas.drawRect(rect, Paint().apply { shader = baseGradient })
+
+        // 右上暖光晕
+        val highlightShader = RadialGradient(
+            W * 0.78f, H * 0.18f,
+            W * 0.55f,
+            COLOR_HIGHLIGHT, Color.TRANSPARENT,
+            Shader.TileMode.CLAMP
+        )
+        canvas.drawRect(rect, Paint().apply { shader = highlightShader })
+
+        // 左下珊瑚暗角
+        val shadowShader = RadialGradient(
+            W * 0.18f, H * 0.88f,
+            W * 0.60f,
+            withAlpha(COLOR_SHADOW, 0.30f), Color.TRANSPARENT,
+            Shader.TileMode.CLAMP
+        )
+        canvas.drawRect(rect, Paint().apply { shader = shadowShader })
+
         canvas.restore()
     }
 
-    // ── 左侧圆形贴纸（白色描边 + 阴影） ──────────────────────────
+    // ── 装饰光晕 blob（增强温度感） ──────────────────────────
+
+    private fun drawDecorations(canvas: Canvas) {
+        canvas.save()
+        val clipPath = Path().apply {
+            addRoundRect(RectF(0f, 0f, W, H), CORNER_RADIUS, CORNER_RADIUS, Path.Direction.CW)
+        }
+        canvas.clipPath(clipPath)
+
+        // 右上奶油色光晕（顶层强调）
+        val blob1Paint = Paint().apply {
+            shader = RadialGradient(
+                W - 90f, -110f, 320f,
+                Color.argb(153, 0xFF, 0xEC, 0xB3), Color.TRANSPARENT,
+                Shader.TileMode.CLAMP
+            )
+        }
+        canvas.drawCircle(W - 90f, -110f, 320f, blob1Paint)
+
+        // 左下白色柔光
+        val blob2Paint = Paint().apply {
+            shader = RadialGradient(
+                -70f, H - 80f, 280f,
+                Color.argb(64, 0xFF, 0xFF, 0xFF), Color.TRANSPARENT,
+                Shader.TileMode.CLAMP
+            )
+        }
+        canvas.drawCircle(-70f, H - 80f, 280f, blob2Paint)
+
+        canvas.restore()
+    }
+
+    // ── 贴纸 mama4（完整可见，无白圆底，下沿压框） ───────────
 
     private fun drawSticker(context: Context, canvas: Canvas) {
-        val radius = STICKER_DIAMETER / 2f
-        val cx = STICKER_CX
-        val cy = STICKER_CY
-
-        // 加载并缩放到圆形区域
-        val original = BitmapFactory.decodeResource(context.resources, R.drawable.mama3)
+        val original = BitmapFactory.decodeResource(context.resources, R.drawable.mama4)
         val scaled = Bitmap.createScaledBitmap(
             original,
-            STICKER_DIAMETER.toInt(),
-            STICKER_DIAMETER.toInt(),
+            STICKER_SIZE.toInt(),
+            STICKER_SIZE.toInt(),
             true
         )
         if (scaled != original) original.recycle()
 
-        // 圆形裁剪绘制
-        canvas.save()
-        val circlePath = Path().apply {
-            addCircle(cx, cy, radius, Path.Direction.CW)
-        }
-        canvas.clipPath(circlePath)
+        val left = STICKER_LEFT
+        val top = H - STICKER_SIZE + STICKER_BOTTOM_OFFSET  // 底部超出 20px
 
-        val left = cx - radius
-        val top = cy - radius
-        canvas.drawBitmap(scaled, left, top, null)
-        canvas.restore()
-
-        // 阴影（偏移 3px）
+        // 阴影：仅上方一点点的 drop shadow 效果（用绘制偏移近似）
         val shadowPaint = Paint().apply {
-            style = Paint.Style.STROKE
-            color = Color.argb(50, 0, 0, 0)
-            strokeWidth = 5f
+            color = Color.argb(90, 0, 0, 0)
             isAntiAlias = true
+            maskFilter = BlurMaskFilter(8f, BlurMaskFilter.Blur.NORMAL)
         }
-        canvas.drawCircle(cx + 3f, cy + 3f, radius, shadowPaint)
+        canvas.drawBitmap(scaled, left + 0f, top + 0f, shadowPaint)
 
-        // 白色描边
-        val strokePaint = Paint().apply {
-            style = Paint.Style.STROKE
-            color = Color.WHITE
-            strokeWidth = 6f
-            isAntiAlias = true
-        }
-        canvas.drawCircle(cx, cy, radius, strokePaint)
+        // 实际贴纸
+        canvas.drawBitmap(scaled, left, top, null)
     }
 
-    // ── 右侧文字区（标题 + 正文） ──────────────────────────────
+    // ── 右上文字块（标题 40 + 正文 18，阴影增强可读性） ──────
 
     private fun drawTextBlock(canvas: Canvas, title: String, content: String) {
         val titlePaint = Paint().apply {
@@ -128,48 +170,47 @@ object NotificationBitmapBuilder {
             textSize = TITLE_SIZE
             isAntiAlias = true
             isFakeBoldText = true
-            setShadowLayer(3f, 1f, 1f, Color.argb(80, 0, 0, 0))
+            letterSpacing = 0.025f
+            setShadowLayer(4f, 0f, 2f, Color.argb(128, 0, 0, 0))
         }
 
         val contentPaint = Paint().apply {
             color = Color.WHITE
             textSize = CONTENT_SIZE
             isAntiAlias = true
-            setShadowLayer(2f, 1f, 1f, Color.argb(80, 0, 0, 0))
+            setShadowLayer(3f, 0f, 1f, Color.argb(128, 0, 0, 0))
         }
 
-        // ── 排版：标题和正文作为一个整体垂直居中 ──
-        val titleLines = breakLines(title, titlePaint, TEXT_MAX_WIDTH)
-        val contentLines = breakLines(content, contentPaint, TEXT_MAX_WIDTH)
+        // 文字块右对齐
+        titlePaint.textAlign = Paint.Align.RIGHT
+        contentPaint.textAlign = Paint.Align.RIGHT
 
+        val x = W - TEXT_RIGHT
+        val maxWidth = TEXT_WIDTH
+
+        // 标题（自动换行）
+        val titleLines = breakLines(title, titlePaint, maxWidth)
         val titleLineHeight = titlePaint.descent() - titlePaint.ascent()
-        val contentLineHeight = contentPaint.descent() - contentPaint.ascent()
-        val titleGap = 16f  // 标题与正文之间的间距
+        val titleGap = 14f
 
-        val titleBlockHeight = titleLines.size * titleLineHeight
-        val contentBlockHeight = contentLines.size * contentLineHeight
-        val totalHeight = titleBlockHeight + titleGap + contentBlockHeight
-
-        val startY = (H - totalHeight) / 2f + titleLineHeight  // 标题 baseline
-
-        // 绘制标题
-        val titleX = TEXT_LEFT
-        var y = startY
+        var y = TEXT_TOP + titleLineHeight  // 第一行 baseline
         for (line in titleLines) {
-            canvas.drawText(line, titleX, y, titlePaint)
+            canvas.drawText(line, x, y, titlePaint)
             y += titleLineHeight
         }
+        y += titleGap - titleLineHeight  // 标题与正文之间的间距
 
-        // 间隔
-        y += titleGap - titleLineHeight  // 上一行已加了最后一个 lineHeight，补回间隙差
-
-        // 绘制正文
+        // 正文（自动换行）
+        val contentLines = breakLines(content, contentPaint, maxWidth)
+        val contentLineHeight = contentPaint.descent() - contentPaint.ascent()
         y += contentLineHeight  // 正文第一行 baseline
         for (line in contentLines) {
-            canvas.drawText(line, titleX, y, contentPaint)
+            canvas.drawText(line, x, y, contentPaint)
             y += contentLineHeight
         }
     }
+
+    // ── 工具方法 ─────────────────────────────────────────────
 
     /**
      * 简单换行：逐字测量，超出最大宽度时换行。
@@ -190,5 +231,13 @@ object NotificationBitmapBuilder {
         }
         if (current.isNotEmpty()) lines.add(current.toString())
         return lines
+    }
+
+    /**
+     * 给颜色加 alpha 通道 (0.0-1.0)。用于 RadialGradient 中心色透明叠加。
+     */
+    private fun withAlpha(color: Int, alpha: Float): Int {
+        val a = (alpha.coerceIn(0f, 1f) * 255).toInt()
+        return Color.argb(a, Color.red(color), Color.green(color), Color.blue(color))
     }
 }
