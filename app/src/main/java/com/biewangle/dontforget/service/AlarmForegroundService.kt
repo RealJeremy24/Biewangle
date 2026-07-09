@@ -13,11 +13,13 @@ import com.biewangle.dontforget.MainActivity
 import com.biewangle.dontforget.R
 import com.biewangle.dontforget.ui.screens.alarm.AlarmActivity
 import com.biewangle.dontforget.util.Constants
+import com.biewangle.dontforget.util.NotificationBitmapBuilder
 
 class AlarmForegroundService : Service() {
 
     private lateinit var player: ReminderPlayer
     private var isPlaying = false
+    private var memoId = -1L
 
     override fun onCreate() {
         super.onCreate()
@@ -25,7 +27,7 @@ class AlarmForegroundService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        val memoId = intent?.getLongExtra(Constants.EXTRA_MEMO_ID, -1L) ?: -1L
+        memoId = intent?.getLongExtra(Constants.EXTRA_MEMO_ID, -1L) ?: -1L
         val title = intent?.getStringExtra(Constants.EXTRA_MEMO_TITLE) ?: "提醒"
         val content = intent?.getStringExtra(Constants.EXTRA_MEMO_CONTENT) ?: ""
         val useCustomRingtone = intent?.getBooleanExtra(Constants.EXTRA_USE_CUSTOM_RINGTONE, true) ?: true
@@ -87,21 +89,63 @@ class AlarmForegroundService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
 
     private fun createNotification(title: String, content: String): Notification {
-        val appIntent = Intent(this, MainActivity::class.java).apply {
+        // 主操作 Intent —— 点击通知进入 AlarmActivity
+        val fullScreenIntent = Intent(this, AlarmActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            putExtra(Constants.EXTRA_MEMO_ID, memoId)
+            putExtra(Constants.EXTRA_MEMO_TITLE, title)
+            putExtra(Constants.EXTRA_MEMO_CONTENT, content)
         }
-        val pendingIntent = PendingIntent.getActivity(
-            this, 0, appIntent,
+        val fullScreenPendingIntent = PendingIntent.getActivity(
+            this, memoId.toInt(), fullScreenIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        return NotificationCompat.Builder(this, Constants.CHANNEL_SERVICE)
+        // 关闭 Action
+        val dismissIntent = Intent(this, AlarmReceiver::class.java).apply {
+            action = Constants.ACTION_DISMISS
+            putExtra(Constants.EXTRA_MEMO_ID, memoId)
+        }
+        val dismissPendingIntent = PendingIntent.getBroadcast(
+            this, (memoId.toInt() + 10000), dismissIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        // 稍后提醒 Action
+        val snoozeIntent = Intent(this, AlarmReceiver::class.java).apply {
+            action = Constants.ACTION_SNOOZE
+            putExtra(Constants.EXTRA_MEMO_ID, memoId)
+            putExtra(Constants.EXTRA_MEMO_TITLE, title)
+            putExtra(Constants.EXTRA_MEMO_CONTENT, content)
+        }
+        val snoozePendingIntent = PendingIntent.getBroadcast(
+            this, (memoId.toInt() + 20000), snoozeIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        // 锁屏大图：Canvas 合成妈妈贴纸 + 动态文字
+        val pictureBitmap = NotificationBitmapBuilder.build(this, title, content)
+        val pictureStyle = NotificationCompat.BigPictureStyle()
+            .bigPicture(pictureBitmap)
+            .setBigContentTitle(title)
+            .setSummaryText(content)
+
+        return NotificationCompat.Builder(this, Constants.CHANNEL_REMINDER)
             .setSmallIcon(R.drawable.ic_notification)
-            .setContentTitle("🔔 $title")
+            .setContentTitle(title)
             .setContentText(content)
-            .setContentIntent(pendingIntent)
-            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .setStyle(pictureStyle)
+            .setPriority(NotificationCompat.PRIORITY_MAX)
+            .setCategory(NotificationCompat.CATEGORY_ALARM)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            .setShowWhen(true)
+            .setFullScreenIntent(fullScreenPendingIntent, true)
+            .setContentIntent(fullScreenPendingIntent)
             .setOngoing(true)
+            .setAutoCancel(false)
+            .setTimeoutAfter(0)
+            .addAction(android.R.drawable.ic_menu_close_clear_cancel, "关闭", dismissPendingIntent)
+            .addAction(android.R.drawable.ic_media_pause, "稍后提醒", snoozePendingIntent)
             .build()
     }
 

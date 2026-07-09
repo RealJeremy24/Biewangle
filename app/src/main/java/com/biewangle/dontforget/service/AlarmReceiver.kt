@@ -11,6 +11,7 @@ import androidx.core.app.NotificationManagerCompat
 import com.biewangle.dontforget.R
 import com.biewangle.dontforget.ui.screens.alarm.AlarmActivity
 import com.biewangle.dontforget.util.Constants
+import com.biewangle.dontforget.util.NotificationBitmapBuilder
 
 class AlarmReceiver : BroadcastReceiver() {
 
@@ -44,9 +45,8 @@ class AlarmReceiver : BroadcastReceiver() {
                 val content = intent.getStringExtra(Constants.EXTRA_MEMO_CONTENT) ?: ""
                 val useCustomRingtone = intent.getBooleanExtra(Constants.EXTRA_USE_CUSTOM_RINGTONE, true)
 
-                // 1. 先发通知（保证通知一定出现，作为兜底）
-                showFullScreenNotification(context, memoId, title, content, useCustomRingtone)
-                Log.d(Constants.LOG_TAG, "通知已发送")
+                // 1. 通知已移至前台服务（避免两个通知同时出现）
+                //    前台服务会带 BigPictureStyle 贴纸大图通知
 
                 // 2. 主动启动全屏 AlarmActivity（解决国产 ROM 拦截 FullScreenIntent 的问题）
                 //    从 BroadcastReceiver.onReceive 启动 Activity 是 Google 文档明确允许的路径，
@@ -121,15 +121,21 @@ class AlarmReceiver : BroadcastReceiver() {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        // 通知内容：HarmonyOS 拦截全屏弹窗,改为让通知本身承担主要提醒职责
-        // - BigTextStyle: 展开后显示完整内容
+        // 锁屏大图通知：Canvas 合成妈妈贴纸 + 动态文字 → BigPictureStyle
+        // - 绿色渐变背景 + 左侧圆形贴纸（mama3）+ 右侧标题/正文
         // - VISIBILITY_PUBLIC: 锁屏可见完整内容
         // - PRIORITY_MAX + CATEGORY_ALARM: 重要级别,横幅 + 铃声 + 震动
+        val pictureBitmap = NotificationBitmapBuilder.build(context, title, content)
+        val pictureStyle = NotificationCompat.BigPictureStyle()
+            .bigPicture(pictureBitmap)
+            .setBigContentTitle(title)
+            .setSummaryText(content)
+
         val notification = NotificationCompat.Builder(context, Constants.CHANNEL_REMINDER)
             .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(title)
             .setContentText(content)
-            .setStyle(NotificationCompat.BigTextStyle().bigText(content).setBigContentTitle(title))
+            .setStyle(pictureStyle)
             .setPriority(NotificationCompat.PRIORITY_MAX)
             .setCategory(NotificationCompat.CATEGORY_ALARM)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
