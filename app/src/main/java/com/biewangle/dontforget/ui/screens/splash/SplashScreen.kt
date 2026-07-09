@@ -1,8 +1,8 @@
 package com.biewangle.dontforget.ui.screens.splash
 
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -29,7 +29,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -52,8 +51,8 @@ import kotlin.math.roundToInt
 
 /**
  * 开场动画时间线：
- *   0.0s – 1.5s   3 次快速 Y 轴旋转（每圈 0.5s，线性）
- *   1.5s – 2.1s   1 次慢速旋转 + 真实照片→卡通头像交叉淡入淡出
+ *   0.0s – 2.1s   一次性减速 Y 轴旋转 0→1080°（3 整圈，落在正面，越转越慢）
+ *   1.45s – 2.1s  收尾期真实照片→卡通头像交叉淡入淡出
  *   2.1s – 2.45s  弹跳放大效果
  *   2.1s          装饰 emoji 陆续出现（💚 ✨）
  *   2.3s          「欢迎回来」标签淡入
@@ -90,28 +89,23 @@ fun SplashScreen(
 
     // ── 动画编排 ──
     LaunchedEffect(Unit) {
-        // ═══ 阶段 1：3 次快转 (0s – 1.5s) ═══
-        spinRotation.animateTo(
-            targetValue = 1080f,  // 3 × 360°
-            animationSpec = tween(durationMillis = 1500, easing = LinearEasing)
-        )
-
-        // ═══ 阶段 2：1 次慢转 + 交叉淡入淡出 (1.5s – 2.1s) ═══
+        // ═══ 阶段 1：一次性减速旋转 0→1080°（3 整圈，~2.1s）+ 收尾交叉淡入 ═══
         coroutineScope {
             launch {
                 spinRotation.animateTo(
-                    targetValue = 1440f,  // +360° = 4 × 360°
+                    targetValue = 1080f,  // 3 × 360°，落在正面（非镜像）
                     animationSpec = tween(
-                        durationMillis = 600,
-                        easing = FastOutSlowInEasing
+                        durationMillis = 2100,
+                        // 起手快、尾部强力减速：观感≈2.5圈快转+缓缓定住
+                        easing = CubicBezierEasing(0.12f, 0f, 0.2f, 1f)
                     )
                 )
             }
+            // 收尾最后 ~650ms 做照片→卡通交叉淡入（此时转速已很慢、接近正面）
             launch {
-                photoAlpha.animateTo(0f, tween(600))
-            }
-            launch {
-                cartoonAlpha.animateTo(1f, tween(600))
+                delay(1450)
+                launch { photoAlpha.animateTo(0f, tween(650)) }
+                cartoonAlpha.animateTo(1f, tween(650))
             }
         }
 
@@ -204,13 +198,7 @@ fun SplashScreen(
                         scaleX = popScale.value
                         scaleY = popScale.value
                     }
-                    .shadow(
-                        elevation = 10.dp,
-                        shape = CircleShape,
-                        ambientColor = Color.Black.copy(alpha = 0.18f),
-                        spotColor = Color.Black.copy(alpha = 0.18f)
-                    )
-                    .clip(CircleShape),
+                    .clip(RoundedCornerShape(32.dp)),
                 contentAlignment = Alignment.Center
             ) {
                 // ── 真实照片层 ──
@@ -225,7 +213,7 @@ fun SplashScreen(
                             transformOrigin = TransformOrigin(0.5f, 0.5f)
                             alpha = photoAlpha.value
                         }
-                        .clip(CircleShape),
+                        .clip(RoundedCornerShape(32.dp)),
                     contentScale = ContentScale.Crop
                 )
 
@@ -241,7 +229,7 @@ fun SplashScreen(
                             transformOrigin = TransformOrigin(0.5f, 0.5f)
                             alpha = cartoonAlpha.value
                         }
-                        .clip(CircleShape),
+                        .clip(RoundedCornerShape(32.dp)),
                     contentScale = ContentScale.Crop
                 )
             }
