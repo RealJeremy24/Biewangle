@@ -3,6 +3,9 @@ package com.biewangle.dontforget.ui.screens.memo
 import android.content.ComponentName
 import android.content.Intent
 import android.net.Uri
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -45,7 +48,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -54,6 +59,7 @@ import com.biewangle.dontforget.ui.theme.scaledSp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.biewangle.dontforget.ui.components.MemoCard
+import com.biewangle.dontforget.R
 import com.biewangle.dontforget.ui.components.QuickTemplateChipRow
 import com.biewangle.dontforget.ui.theme.BackgroundWarm
 import com.biewangle.dontforget.ui.theme.CardWhite
@@ -63,6 +69,7 @@ import com.biewangle.dontforget.ui.theme.TextDarkBrown
 import com.biewangle.dontforget.ui.theme.TextWarmGray
 import com.biewangle.dontforget.ui.theme.WhiteText
 import com.biewangle.dontforget.util.SoundEffectPlayer
+import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -100,7 +107,7 @@ fun MemoScreen(
                 .background(BackgroundWarm),
             contentPadding = PaddingValues(bottom = 100.dp)
         ) {
-            // 品牌顶部栏 — 暖橙渐变
+            // 品牌顶部栏 — 暖橙渐变 + mama喊话
             item {
                 Box(
                     modifier = Modifier
@@ -113,24 +120,44 @@ fun MemoScreen(
                             ),
                             shape = RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp)
                         )
-                        .padding(horizontal = 20.dp, vertical = 22.dp)
+                        .padding(start = 20.dp, end = 20.dp, top = 22.dp, bottom = 0.dp)
                 ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text("🏠", fontSize = 28.sp)
+                    Row(verticalAlignment = Alignment.Top) {
+                        Text("🏠", fontSize = 28.sp, modifier = Modifier.padding(top = 4.dp))
                         Spacer(Modifier.width(10.dp))
-                        Column {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
                             Text(
-                                "冲凉最舒适",
+                                "家",
                                 fontSize = scaledSp(26),
                                 fontWeight = FontWeight.Bold,
                                 color = WhiteText
                             )
                             Text(
-                                "别忘乐 · 生活好帮手",
+                                "别忘\"乐\" · 生活好帮手",
                                 fontSize = scaledSp(14),
                                 color = WhiteText.copy(alpha = 0.75f)
                             )
                         }
+                        Spacer(Modifier.weight(1f))
+                        Text(
+                            "\"冲凉最舒适！\"",
+                            fontSize = scaledSp(18),
+                            fontWeight = FontWeight.SemiBold,
+                            color = WhiteText,
+                            modifier = Modifier
+                                .padding(top = 20.dp)
+                                .graphicsLayer { rotationZ = -5f }
+                        )
+                        Spacer(Modifier.width(4.dp))
+                        ShoutEffects(Modifier.padding(top = 4.dp))
+                        Spacer(Modifier.width(2.dp))
+                        Image(
+                            painter = painterResource(id = R.drawable.mama6),
+                            contentDescription = "妈妈喊你",
+                            modifier = Modifier.size(52.dp)
+                        )
                     }
                 }
             }
@@ -293,5 +320,27 @@ fun MemoScreen(
                 }
             }
         )
+    }
+}
+
+/**
+ * 动漫风格喊话效果 — 〰️ 波浪线模仿漫画中喊话的声波，连接文字与妈妈贴纸。
+ */
+@Composable
+private fun ShoutEffects(modifier: Modifier = Modifier) {
+    val alpha = remember { Animatable(0f) }
+    LaunchedEffect(Unit) {
+        delay(300)
+        alpha.animateTo(1f, animationSpec = tween(400))
+    }
+    Column(
+        modifier = modifier.graphicsLayer {
+            this.alpha = alpha.value
+            rotationZ = -5f
+        },
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text("〰️", fontSize = 14.sp, color = WhiteText.copy(alpha = 0.55f))
+        Text("〰️", fontSize = 18.sp, color = WhiteText.copy(alpha = 0.75f))
     }
 }

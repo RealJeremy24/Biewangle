@@ -1,5 +1,6 @@
 package com.biewangle.dontforget.ui.screens.settings
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -12,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -31,10 +33,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.biewangle.dontforget.R
 import com.biewangle.dontforget.ui.theme.scaledSp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
@@ -80,7 +84,7 @@ fun SettingsScreen(
                     ),
                     shape = RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp)
                 )
-                .padding(horizontal = 20.dp, vertical = 22.dp)
+                .padding(start = 20.dp, end = 20.dp, top = 22.dp, bottom = 0.dp)
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text("⚙️", fontSize = 28.sp)
@@ -98,6 +102,12 @@ fun SettingsScreen(
                         color = WhiteText.copy(alpha = 0.75f)
                     )
                 }
+                Spacer(Modifier.weight(1f))
+                Image(
+                    painter = painterResource(id = R.drawable.mama5),
+                    contentDescription = "妈妈贴纸",
+                    modifier = Modifier.size(52.dp)
+                )
             }
         }
 
