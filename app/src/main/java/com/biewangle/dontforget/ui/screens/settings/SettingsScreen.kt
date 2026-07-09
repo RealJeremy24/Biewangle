@@ -17,7 +17,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Switch
@@ -36,6 +38,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.biewangle.dontforget.R
@@ -52,6 +55,8 @@ import com.biewangle.dontforget.ui.theme.PrimaryOrange
 import com.biewangle.dontforget.ui.theme.TextDarkBrown
 import com.biewangle.dontforget.ui.theme.TextWarmGray
 import com.biewangle.dontforget.ui.theme.WhiteText
+import com.biewangle.dontforget.util.SoundEffectPlayer
+import androidx.compose.ui.platform.LocalContext
 
 import kotlin.math.roundToInt
 
@@ -65,6 +70,14 @@ fun SettingsScreen(
     val fontSliderPosition by viewModel.fontSliderPosition.collectAsState()
     val fontScale by viewModel.fontScale.collectAsState()
     val vibrateEnabled by viewModel.vibrateEnabled.collectAsState()
+
+    // 统计详情弹窗
+    val detailDialog by viewModel.detailDialog.collectAsState()
+    val totalDetailData by viewModel.totalDetailData.collectAsState()
+    val completedDetailData by viewModel.completedDetailData.collectAsState()
+    val rateDetailData by viewModel.rateDetailData.collectAsState()
+
+    val context = LocalContext.current
 
     Column(
         modifier = Modifier
@@ -122,19 +135,31 @@ fun SettingsScreen(
                 icon = "📝",
                 value = "${stats.total}",
                 label = "总事项",
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
+                onClick = {
+                    SoundEffectPlayer.playButtonClick(context)
+                    viewModel.showDetailDialog(StatsDetailDialog.TOTAL)
+                }
             )
             StatsCard(
                 icon = "✅",
                 value = "${stats.completed}",
                 label = "已完成",
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
+                onClick = {
+                    SoundEffectPlayer.playButtonClick(context)
+                    viewModel.showDetailDialog(StatsDetailDialog.COMPLETED)
+                }
             )
             StatsCard(
                 icon = "📊",
                 value = stats.ratePercent,
                 label = "完成率",
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
+                onClick = {
+                    SoundEffectPlayer.playButtonClick(context)
+                    viewModel.showDetailDialog(StatsDetailDialog.RATE)
+                }
             )
         }
 
@@ -192,6 +217,32 @@ fun SettingsScreen(
         )
 
         Spacer(Modifier.height(16.dp))
+    }
+
+    // ── 统计详情弹窗 ──
+
+    // 总事项详情
+    if (detailDialog == StatsDetailDialog.TOTAL) {
+        TotalDetailDialog(
+            data = totalDetailData,
+            onDismiss = { viewModel.hideDetailDialog() }
+        )
+    }
+
+    // 已完成详情
+    if (detailDialog == StatsDetailDialog.COMPLETED) {
+        CompletedDetailDialog(
+            data = completedDetailData,
+            onDismiss = { viewModel.hideDetailDialog() }
+        )
+    }
+
+    // 完成率详情
+    if (detailDialog == StatsDetailDialog.RATE) {
+        RateDetailDialog(
+            data = rateDetailData,
+            onDismiss = { viewModel.hideDetailDialog() }
+        )
     }
 }
 
@@ -301,6 +352,250 @@ private fun SettingsRowWithSwitch(
                 uncheckedThumbColor = WhiteText,
                 uncheckedTrackColor = ChipUnselected
             )
+        )
+    }
+}
+
+// ─────────────────────────────────────────────
+// 统计详情弹窗
+// ─────────────────────────────────────────────
+
+/** 总事项 — 按日期分组统计 */
+@Composable
+private fun TotalDetailDialog(
+    data: TotalDetailData,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = BackgroundWarm,
+        shape = RoundedCornerShape(24.dp),
+        title = {
+            Text(
+                "📝 总事项",
+                fontSize = scaledSp(26),
+                fontWeight = FontWeight.Bold,
+                color = PrimaryOrange,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth()
+            )
+        },
+        text = {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                DetailRow("☀️", "今天新增", "${data.today} 条")
+                DetailRow("📅", "本周新增", "${data.thisWeek} 条")
+                DetailRow("🗓️", "本月新增", "${data.thisMonth} 条")
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(1.dp)
+                        .background(DividerWarm)
+                )
+                DetailRow("📋", "全部事项", "${data.allTime} 条")
+            }
+        },
+        confirmButton = {
+            DialogCloseButton(onDismiss)
+        }
+    )
+}
+
+/** 已完成 — 最近完成列表 */
+@Composable
+private fun CompletedDetailDialog(
+    data: CompletedDetailData,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = BackgroundWarm,
+        shape = RoundedCornerShape(24.dp),
+        title = {
+            Text(
+                "✅ 已完成事项",
+                fontSize = scaledSp(26),
+                fontWeight = FontWeight.Bold,
+                color = PrimaryOrange,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth()
+            )
+        },
+        text = {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(
+                    "共完成 ${data.total} 条",
+                    fontSize = scaledSp(18),
+                    color = TextWarmGray,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                if (data.recentItems.isEmpty()) {
+                    Text(
+                        "还没有完成的事项\n开始行动吧！",
+                        fontSize = scaledSp(20),
+                        color = TextWarmGray,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 16.dp)
+                    )
+                } else {
+                    Text(
+                        "最近完成：",
+                        fontSize = scaledSp(18),
+                        color = TextWarmGray
+                    )
+                    data.recentItems.forEach { memo ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(CardWhite, RoundedCornerShape(12.dp))
+                                .padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text("✅", fontSize = 18.sp)
+                            Spacer(Modifier.width(8.dp))
+                            Text(
+                                memo.title,
+                                fontSize = scaledSp(20),
+                                color = TextDarkBrown,
+                                fontWeight = FontWeight.Medium,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            DialogCloseButton(onDismiss)
+        }
+    )
+}
+
+/** 完成率 — 进度条 + 鼓励语 */
+@Composable
+private fun RateDetailDialog(
+    data: RateDetailData,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = BackgroundWarm,
+        shape = RoundedCornerShape(24.dp),
+        title = {
+            Text(
+                "📊 完成率",
+                fontSize = scaledSp(26),
+                fontWeight = FontWeight.Bold,
+                color = PrimaryOrange,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth()
+            )
+        },
+        text = {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                // 超大百分比
+                Text(
+                    data.ratePercent,
+                    fontSize = scaledSp(48),
+                    fontWeight = FontWeight.Bold,
+                    color = PrimaryOrange
+                )
+                Text(
+                    "${data.completed} / ${data.total} 条已完成",
+                    fontSize = scaledSp(18),
+                    color = TextWarmGray
+                )
+                // 进度条
+                LinearProgressIndicator(
+                    progress = if (data.total > 0) data.completed.toFloat() / data.total else 0f,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(16.dp)
+                        .background(ChipUnselected, RoundedCornerShape(8.dp)),
+                    color = PrimaryOrange,
+                    trackColor = ChipUnselected,
+                )
+                // 鼓励语
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(EncourageBg, RoundedCornerShape(16.dp))
+                        .padding(16.dp)
+                ) {
+                    Text(
+                        data.encourageMessage,
+                        fontSize = scaledSp(20),
+                        color = TextDarkBrown,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            DialogCloseButton(onDismiss)
+        }
+    )
+}
+
+/** 详情行 — 图标 + 标签 + 数值 */
+@Composable
+private fun DetailRow(icon: String, label: String, value: String) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(CardWhite, RoundedCornerShape(12.dp))
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(icon, fontSize = 24.sp)
+        Spacer(Modifier.width(12.dp))
+        Text(
+            label,
+            fontSize = scaledSp(20),
+            color = TextDarkBrown,
+            modifier = Modifier.weight(1f)
+        )
+        Text(
+            value,
+            fontSize = scaledSp(22),
+            fontWeight = FontWeight.Bold,
+            color = PrimaryOrange
+        )
+    }
+}
+
+/** 弹窗底部大关闭按钮 */
+@Composable
+private fun DialogCloseButton(onDismiss: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(56.dp)
+            .background(PrimaryOrange, RoundedCornerShape(12.dp))
+            .clickable { onDismiss() },
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            "关  闭",
+            fontSize = scaledSp(22),
+            fontWeight = FontWeight.Bold,
+            color = WhiteText,
+            letterSpacing = 4.sp
         )
     }
 }
