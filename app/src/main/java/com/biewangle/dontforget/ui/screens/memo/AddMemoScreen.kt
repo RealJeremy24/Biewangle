@@ -42,6 +42,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import android.widget.Toast
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -231,17 +233,26 @@ fun AddMemoSheet(viewModel: MemoViewModel) {
                 modifier = Modifier.weight(1f)
             )
             if (formState.reminderEnabled) {
-                Text(
-                    text = String.format("%02d:%02d", formState.reminderHour, formState.reminderMinute),
-                    fontSize = scaledSp(22),
-                    color = PrimaryOrange,
+                Row(
                     modifier = Modifier
+                        .clip(RoundedCornerShape(10.dp))
                         .clickable {
                             SoundEffectPlayer.playButtonClick(context)
                             showTimePicker = true
                         }
-                        .padding(horizontal = 12.dp)
-                )
+                        .background(EncourageBg, RoundedCornerShape(10.dp))
+                        .padding(horizontal = 14.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = String.format("%02d:%02d", formState.reminderHour, formState.reminderMinute),
+                        fontSize = scaledSp(22),
+                        fontWeight = FontWeight.Bold,
+                        color = PrimaryOrange
+                    )
+                    Spacer(Modifier.width(4.dp))
+                    Text("›", fontSize = scaledSp(22), color = PrimaryOrange)
+                }
             }
             Switch(
                 checked = formState.reminderEnabled,
@@ -278,17 +289,29 @@ fun AddMemoSheet(viewModel: MemoViewModel) {
                     modifier = Modifier.weight(1f)
                 )
                 // 点击弹出铃声选择弹窗
-                Text(
-                    text = ringtoneDisplayName,
-                    fontSize = scaledSp(18),
-                    color = PrimaryOrange,
+                Row(
                     modifier = Modifier
+                        .clip(RoundedCornerShape(10.dp))
                         .clickable {
                             SoundEffectPlayer.playButtonClick(context)
                             showRingtoneDialog = true
                         }
-                        .padding(horizontal = 8.dp)
-                )
+                        .background(EncourageBg, RoundedCornerShape(10.dp))
+                        .padding(horizontal = 14.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = ringtoneDisplayName,
+                        fontSize = scaledSp(20),
+                        fontWeight = FontWeight.Medium,
+                        color = PrimaryOrange,
+                        maxLines = 1,
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f, fill = false)
+                    )
+                    Spacer(Modifier.width(4.dp))
+                    Text("›", fontSize = scaledSp(22), color = PrimaryOrange)
+                }
                 Switch(
                     checked = formState.useCustomRingtone,
                     onCheckedChange = {
@@ -325,14 +348,15 @@ fun AddMemoSheet(viewModel: MemoViewModel) {
                     modifier = Modifier
                         .weight(1f)
                         .height(56.dp)
-                        .background(
-                            if (selected) ChipSelected else ChipUnselected,
-                            RoundedCornerShape(12.dp)
-                        )
+                        .clip(RoundedCornerShape(12.dp))
                         .clickable {
                             SoundEffectPlayer.playButtonClick(context)
                             viewModel.updateRepeatType(type)
-                        },
+                        }
+                        .background(
+                            if (selected) ChipSelected else ChipUnselected,
+                            RoundedCornerShape(12.dp)
+                        ),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
@@ -354,11 +378,12 @@ fun AddMemoSheet(viewModel: MemoViewModel) {
             modifier = Modifier
                 .fillMaxWidth()
                 .height(64.dp)
-                .background(PrimaryOrange, RoundedCornerShape(16.dp))
+                .clip(RoundedCornerShape(16.dp))
                 .clickable {
                     SoundEffectPlayer.playButtonClick(context)
                     viewModel.saveMemo()
-                },
+                }
+                .background(PrimaryOrange, RoundedCornerShape(16.dp)),
             contentAlignment = Alignment.Center
         ) {
             Text(
@@ -377,12 +402,13 @@ fun AddMemoSheet(viewModel: MemoViewModel) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(64.dp)
-                    .background(AlertOrangeRed, RoundedCornerShape(16.dp))
+                    .clip(RoundedCornerShape(16.dp))
                     .clickable {
                         SoundEffectPlayer.playButtonClick(context)
                         viewModel.deleteMemo(formState.id)
                         viewModel.hideForm()
-                    },
+                    }
+                    .background(AlertOrangeRed, RoundedCornerShape(16.dp)),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
@@ -408,7 +434,20 @@ fun AddMemoSheet(viewModel: MemoViewModel) {
             confirmButton = {
                 TextButton(onClick = {
                     SoundEffectPlayer.playButtonClick(context)
-                    datePickerState.selectedDateMillis?.let { viewModel.updateDate(it) }
+                    val selected = datePickerState.selectedDateMillis
+                    if (selected != null) {
+                        val todayStart = java.util.Calendar.getInstance().apply {
+                            set(java.util.Calendar.HOUR_OF_DAY, 0)
+                            set(java.util.Calendar.MINUTE, 0)
+                            set(java.util.Calendar.SECOND, 0)
+                            set(java.util.Calendar.MILLISECOND, 0)
+                        }.timeInMillis
+                        if (selected < todayStart) {
+                            Toast.makeText(context, "不能选择过去的日期哦～", Toast.LENGTH_SHORT).show()
+                            return@TextButton
+                        }
+                        viewModel.updateDate(selected)
+                    }
                     showDatePicker = false
                 }) { Text("确定", fontSize = scaledSp(22)) }
             },
