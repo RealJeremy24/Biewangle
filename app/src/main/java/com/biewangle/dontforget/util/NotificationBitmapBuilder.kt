@@ -33,9 +33,9 @@ object NotificationBitmapBuilder {
     private const val TEXT_TOP = 48f
     private const val TEXT_WIDTH = 320f
 
-    // 字号
-    private const val TITLE_SIZE = 40f
-    private const val CONTENT_SIZE = 18f
+    // 字号（标题 56 / 正文 24 — 加大以适应中老年用户，2026-07-09 调整）
+    private const val TITLE_SIZE = 56f
+    private const val CONTENT_SIZE = 24f
 
     // 暖橙夕阳配色 — 与 colors.xml 中的 primary_orange / alert_orange_red 对齐
     private val COLOR_TOP_LEFT = Color.rgb(0xFF, 0xB0, 0x88)     // #FFB088 桃粉
