@@ -1,5 +1,7 @@
 package com.biewangle.dontforget.ui.navigation
 
+import android.app.Activity
+import android.content.ContextWrapper
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
@@ -63,6 +65,10 @@ fun BiewangleNavHost() {
 
     // Splash 页面不显示底部导航栏
     val showBottomBar = currentRoute != Screen.Splash.route
+
+    // 注意：返回键拦截已搬到 MainActivity.onBackPressedDispatcher 中，
+    // 见 [MainActivity.kt:onCreate] 里注册的 OnBackPressedCallback。
+    // 这里不放 BackHandler，避免与 Activity 级回调产生优先级竞态。
 
     Scaffold(
         bottomBar = {
@@ -131,8 +137,8 @@ fun BiewangleNavHost() {
                 SplashScreen(
                     onSplashFinished = {
                         navController.navigate(Screen.Memos.route) {
-                            // 移除 Splash，使用户按返回键时直接退出
-                            popUpTo(Screen.Splash.route) { inclusive = true }
+                            // 保留 Splash 在 back stack 中，使底部栏 popUpTo 能找到目标
+                            popUpTo(Screen.Splash.route)
                         }
                     }
                 )
@@ -145,4 +151,14 @@ fun BiewangleNavHost() {
             }
         }
     }
+}
+
+/** 从 ContextWrapper 链中提取 Activity，防止 cast 失败 */
+private fun android.content.Context.findActivity(): Activity? {
+    var c = this
+    while (c is ContextWrapper) {
+        if (c is Activity) return c
+        c = c.baseContext
+    }
+    return null
 }

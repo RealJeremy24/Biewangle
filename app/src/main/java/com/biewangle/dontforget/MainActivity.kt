@@ -8,8 +8,10 @@ import android.os.Build
 import android.os.Bundle
 import android.os.PowerManager
 import android.provider.Settings
+import android.view.KeyEvent
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
@@ -50,6 +52,21 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        // 任意页面按一次返回键直接退到系统桌面（不再回退到 Splash）。
+        // 注意：这里用 moveTaskToBack(false) 而非 finish()。
+        // 某些国产 ROM（含 HarmonyOS）在销毁带 LAUNCHER intent-filter 的 Activity 后，会
+        // 自动以启动器意图重启，导致 Splash 重新播放——走 finish 用户体感还是看到 Splash。
+        // moveTaskToBack 把整个 task 推到 home 之后但保留 Activity，OS 不会触发自动重启。
+        // 拨号器层：dispatchKeyEvent 在 OnBackPressedDispatcher 之前获得 KeyEvent，是最后的兜底。
+        onBackPressedDispatcher.addCallback(
+            this,
+            object : OnBackPressedCallback(true) {
+                override fun handleOnBackPressed() {
+                    moveTaskToBack(false)
+                }
+            }
+        )
+
         // 请求必要权限
         requestNecessaryPermissions()
 
@@ -61,6 +78,21 @@ class MainActivity : ComponentActivity() {
             BiewangleTheme {
                 BiewangleNavHost()
             }
+        }
+    }
+
+    /**
+     * 兜底拦截：在 dispatcher 之前捕获 KEYCODE_BACK。
+     * 如果 dispatcher 因任何原因（ROM 差异 / 优先级竞态）没回调，回这里同样把 task 推到 home。
+     */
+    override fun dispatchKeyEvent(event: KeyEvent?): Boolean {
+        return if (event?.keyCode == KeyEvent.KEYCODE_BACK &&
+            event.action == KeyEvent.ACTION_UP
+        ) {
+            moveTaskToBack(false)
+            true
+        } else {
+            super.dispatchKeyEvent(event)
         }
     }
 
