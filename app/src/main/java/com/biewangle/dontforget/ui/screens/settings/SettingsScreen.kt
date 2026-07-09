@@ -191,7 +191,10 @@ fun SettingsScreen(
             icon = "📳",
             title = "提醒时震动",
             checked = vibrateEnabled,
-            onCheckedChange = { viewModel.toggleVibrateEnabled() }
+            onCheckedChange = {
+                SoundEffectPlayer.playSwitchToggle()
+                viewModel.toggleVibrateEnabled()
+            }
         )
 
         Spacer(Modifier.height(16.dp))
@@ -274,7 +277,13 @@ private fun FontSizeSliderRow(
             // Slider
             Slider(
                 value = sliderPosition.toFloat(),
-                onValueChange = { onSliderChange(it.roundToInt()) },
+                onValueChange = {
+                    val newPos = it.roundToInt()
+                    if (newPos != sliderPosition) {
+                        SoundEffectPlayer.playSliderStep()
+                    }
+                    onSliderChange(newPos)
+                },
                 valueRange = 0f..10f,
                 steps = 9, // 10 档 = 9 个步进点
                 modifier = Modifier
