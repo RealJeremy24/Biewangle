@@ -530,7 +530,7 @@ private fun RateDetailDialog(
                 )
                 // 进度条
                 LinearProgressIndicator(
-                    progress = if (data.total > 0) data.completed.toFloat() / data.total else 0f,
+                    progress = { if (data.total > 0) data.completed.toFloat() / data.total else 0f },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(16.dp)

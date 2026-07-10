@@ -23,6 +23,7 @@ import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
@@ -427,7 +428,8 @@ fun AddMemoSheet(viewModel: MemoViewModel) {
     // 日期选择对话框
     if (showDatePicker) {
         val datePickerState = rememberDatePickerState(
-            initialSelectedDateMillis = formState.targetDate
+            initialSelectedDateMillis = formState.targetDate,
+            selectableDates = MinTodaySelectableDates
         )
         DatePickerDialog(
             onDismissRequest = { showDatePicker = false },
@@ -551,5 +553,26 @@ fun AddMemoSheet(viewModel: MemoViewModel) {
             },
             onDismiss = { showRingtoneDialog = false }
         )
+    }
+}
+
+/**
+ * 日期可选范围：今天及以后才可选（过去的日期在 DatePicker 中灰显 + 不可点）。
+ * 与 confirm 时 "selected < todayStart" 的 toast 兜底逻辑保持一致。
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+private object MinTodaySelectableDates : SelectableDates {
+    override fun isSelectableDate(utcTimeMillis: Long): Boolean {
+        val todayStart = java.util.Calendar.getInstance().apply {
+            set(java.util.Calendar.HOUR_OF_DAY, 0)
+            set(java.util.Calendar.MINUTE, 0)
+            set(java.util.Calendar.SECOND, 0)
+            set(java.util.Calendar.MILLISECOND, 0)
+        }.timeInMillis
+        return utcTimeMillis >= todayStart
+    }
+
+    override fun isSelectableYear(year: Int): Boolean {
+        return year >= java.util.Calendar.getInstance().get(java.util.Calendar.YEAR)
     }
 }

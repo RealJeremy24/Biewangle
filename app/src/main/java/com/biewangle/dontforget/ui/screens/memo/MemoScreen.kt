@@ -84,6 +84,13 @@ fun MemoScreen(
     val scope = rememberCoroutineScope()
     var showAutoStartDialog by remember { mutableStateOf(false) }
 
+    // "冲凉最舒适" 渐入动画（与波浪线喊话同步出现）
+    val shoutAlpha = remember { Animatable(0f) }
+    LaunchedEffect(Unit) {
+        delay(300)
+        shoutAlpha.animateTo(1f, animationSpec = tween(400))
+    }
+
     // 监听保存完成事件，首次显示自启动引导
     LaunchedEffect(Unit) {
         viewModel.memoSaved.collect {
@@ -148,7 +155,10 @@ fun MemoScreen(
                             color = WhiteText,
                             modifier = Modifier
                                 .padding(top = 20.dp)
-                                .graphicsLayer { rotationZ = -5f }
+                                .graphicsLayer {
+                                    rotationZ = -5f
+                                    alpha = shoutAlpha.value
+                                }
                         )
                         Spacer(Modifier.width(4.dp))
                         ShoutEffects(Modifier.padding(top = 4.dp))

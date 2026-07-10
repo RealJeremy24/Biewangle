@@ -55,10 +55,10 @@ import kotlin.math.roundToInt
  *   2.2s – 2.6s   真实照片定格
  *   2.6s – 3.2s   原地交叉淡入：真实照片 → 卡通头像
  *   3.2s – 3.55s  弹跳放大效果
- *   2.1s          装饰 emoji 陆续出现（💚 ✨）
- *   2.3s          「欢迎回来」标签淡入
- *   3.6s          底部白色面板滑入 + 加载指示圆点
- *   ~5.0s         自动进入主界面
+ *   3.55s         装饰 💚 淡入；3.7s/3.75s/3.85s 依次 ✨、文字「欢迎回来」、✨（与底部面板开始并行）
+ *   4.0s          底部白色面板开始滑入 + 加载指示圆点
+ *   4.55s         面板滑入完成
+ *   ~6.05s        自动进入主界面
  */
 @Composable
 fun SplashScreen(
@@ -123,7 +123,7 @@ fun SplashScreen(
         launch { delay(300); spark2Anim.animateTo(1f, tween(500)) }    // 2.4s  ✨
 
         // ═══ 阶段 4：底部面板滑入 (3.6s) ═══
-        delay(1150)  // 等待 2.45 + 1.15 = 3.6s
+        delay(450)  // 缩短到 3.55 + 0.45 = 4.0s（旋转重构后顺延约 1.1s，按方案 1 调回）
         showAppUi = true
         panelSlide.animateTo(
             targetValue = 0f,
