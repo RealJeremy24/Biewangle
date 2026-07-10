@@ -30,11 +30,27 @@ interface MemoDao {
     @Query("SELECT COUNT(*) FROM memos WHERE is_completed = 1")
     fun getCompletedCount(): Flow<Int>
 
+    /** 一次性获取总事项数（suspend） */
+    @Query("SELECT COUNT(*) FROM memos")
+    suspend fun getTotalCountOnce(): Int
+
+    /** 一次性获取已完成数（suspend） */
+    @Query("SELECT COUNT(*) FROM memos WHERE is_completed = 1")
+    suspend fun getCompletedCountOnce(): Int
+
     // ── 统计详情查询 ──
 
     /** 获取某天开始时间之后创建的备忘数量 */
     @Query("SELECT COUNT(*) FROM memos WHERE created_at >= :since")
     suspend fun getCountSince(since: Long): Int
+
+    /** 获取某天开始时间之后创建且已完成的备忘数量 */
+    @Query("SELECT COUNT(*) FROM memos WHERE created_at >= :since AND is_completed = 1")
+    suspend fun getCompletedCountSince(since: Long): Int
+
+    /** 获取某天开始时间之后创建的所有备忘（按创建时间倒序） */
+    @Query("SELECT * FROM memos WHERE created_at >= :since ORDER BY created_at DESC")
+    suspend fun getAllMemosSince(since: Long): List<MemoEntity>
 
     /** 获取在时间范围内创建的备忘中，已完成的备忘录 */
     @Query("SELECT * FROM memos WHERE is_completed = 1 AND created_at >= :since ORDER BY updated_at DESC LIMIT :limit")

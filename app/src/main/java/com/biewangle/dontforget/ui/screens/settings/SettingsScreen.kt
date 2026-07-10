@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -20,6 +21,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Switch
@@ -52,7 +55,6 @@ import com.biewangle.dontforget.ui.components.StatsCard
 import com.biewangle.dontforget.ui.theme.BackgroundWarm
 import com.biewangle.dontforget.ui.theme.CardWhite
 import com.biewangle.dontforget.ui.theme.ChipUnselected
-import com.biewangle.dontforget.ui.theme.DividerWarm
 import com.biewangle.dontforget.ui.theme.EncourageBg
 import com.biewangle.dontforget.ui.theme.PrimaryOrange
 import com.biewangle.dontforget.ui.theme.TextDarkBrown
@@ -73,6 +75,7 @@ fun SettingsScreen(
     val fontSliderPosition by viewModel.fontSliderPosition.collectAsState()
     val fontScale by viewModel.fontScale.collectAsState()
     val vibrateEnabled by viewModel.vibrateEnabled.collectAsState()
+    val selectedPeriod by viewModel.selectedPeriod.collectAsState()
 
     // 统计详情弹窗
     val detailDialog by viewModel.detailDialog.collectAsState()
@@ -129,6 +132,41 @@ fun SettingsScreen(
 
         Spacer(Modifier.height(16.dp))
 
+        // 时段选择芯片
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            StatsPeriod.entries.forEach { period ->
+                FilterChip(
+                    selected = selectedPeriod == period,
+                    onClick = {
+                        SoundEffectPlayer.playButtonClick(context)
+                        viewModel.selectPeriod(period)
+                    },
+                    label = {
+                        Text(
+                            text = period.label,
+                            fontSize = scaledSp(18),
+                            fontWeight = if (selectedPeriod == period) FontWeight.Bold else FontWeight.Medium,
+                            color = if (selectedPeriod == period) WhiteText else TextDarkBrown
+                        )
+                    },
+                    shape = RoundedCornerShape(20.dp),
+                    colors = FilterChipDefaults.filterChipColors(
+                        containerColor = ChipUnselected,
+                        selectedContainerColor = PrimaryOrange,
+                        labelColor = TextDarkBrown,
+                        selectedLabelColor = WhiteText
+                    )
+                )
+            }
+        }
+
+        Spacer(Modifier.height(12.dp))
+
         // 统计卡片
         Row(
             modifier = Modifier
@@ -139,7 +177,7 @@ fun SettingsScreen(
             StatsCard(
                 icon = "📝",
                 value = "${stats.total}",
-                label = "总事项",
+                label = "事项",
                 modifier = Modifier.weight(1f),
                 onClick = {
                     SoundEffectPlayer.playButtonClick(context)
@@ -374,7 +412,7 @@ private fun SettingsRowWithSwitch(
 // 统计详情弹窗
 // ─────────────────────────────────────────────
 
-/** 总事项 — 按日期分组统计 */
+/** 总事项 — 按时段分组 */
 @Composable
 private fun TotalDetailDialog(
     data: TotalDetailData,
@@ -386,7 +424,7 @@ private fun TotalDetailDialog(
         shape = RoundedCornerShape(24.dp),
         title = {
             Text(
-                "📝 总事项",
+                "📝 全部事项",
                 fontSize = scaledSp(26),
                 fontWeight = FontWeight.Bold,
                 color = PrimaryOrange,
@@ -396,19 +434,65 @@ private fun TotalDetailDialog(
         },
         text = {
             Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = 400.dp)
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                DetailRow("☀️", "今天新增", "${data.today} 条")
-                DetailRow("📅", "本周新增", "${data.thisWeek} 条")
-                DetailRow("🗓️", "本月新增", "${data.thisMonth} 条")
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(1.dp)
-                        .background(DividerWarm)
+                Text(
+                    "共 ${data.total} 条事项",
+                    fontSize = scaledSp(18),
+                    color = TextWarmGray,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
                 )
-                DetailRow("📋", "全部事项", "${data.allTime} 条")
+                if (data.groups.isEmpty()) {
+                    Text(
+                        "还没有事项\n创建一个备忘吧！",
+                        fontSize = scaledSp(20),
+                        color = TextWarmGray,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 16.dp)
+                    )
+                } else {
+                    data.groups.forEach { group ->
+                        // 分组标题
+                        Text(
+                            text = "📅 ${group.groupLabel}",
+                            fontSize = scaledSp(18),
+                            fontWeight = FontWeight.Bold,
+                            color = TextDarkBrown,
+                            modifier = Modifier.padding(top = 4.dp)
+                        )
+                        group.items.forEach { memo ->
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .background(CardWhite, RoundedCornerShape(12.dp))
+                                    .padding(12.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    if (memo.isCompleted) "✅" else "⬜",
+                                    fontSize = 18.sp
+                                )
+                                Spacer(Modifier.width(8.dp))
+                                Text(
+                                    memo.title,
+                                    fontSize = scaledSp(20),
+                                    color = TextDarkBrown,
+                                    fontWeight = FontWeight.Medium,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    modifier = Modifier.weight(1f)
+                                )
+                            }
+                        }
+                    }
+                }
             }
         },
         confirmButton = {
@@ -417,7 +501,7 @@ private fun TotalDetailDialog(
     )
 }
 
-/** 已完成 — 最近完成列表 */
+/** 已完成 — 按完成日期分组 */
 @Composable
 private fun CompletedDetailDialog(
     data: CompletedDetailData,
@@ -439,7 +523,10 @@ private fun CompletedDetailDialog(
         },
         text = {
             Column(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = 400.dp)
+                    .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Text(
@@ -449,7 +536,7 @@ private fun CompletedDetailDialog(
                     textAlign = TextAlign.Center,
                     modifier = Modifier.fillMaxWidth()
                 )
-                if (data.recentItems.isEmpty()) {
+                if (data.groups.isEmpty()) {
                     Text(
                         "还没有完成的事项\n开始行动吧！",
                         fontSize = scaledSp(20),
@@ -460,30 +547,35 @@ private fun CompletedDetailDialog(
                             .padding(vertical = 16.dp)
                     )
                 } else {
-                    Text(
-                        "最近完成：",
-                        fontSize = scaledSp(18),
-                        color = TextWarmGray
-                    )
-                    data.recentItems.forEach { memo ->
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .background(CardWhite, RoundedCornerShape(12.dp))
-                                .padding(12.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text("✅", fontSize = 18.sp)
-                            Spacer(Modifier.width(8.dp))
-                            Text(
-                                memo.title,
-                                fontSize = scaledSp(20),
-                                color = TextDarkBrown,
-                                fontWeight = FontWeight.Medium,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                                modifier = Modifier.weight(1f)
-                            )
+                    data.groups.forEach { group ->
+                        // 日期标题
+                        Text(
+                            text = "📅 ${group.dateLabel}",
+                            fontSize = scaledSp(18),
+                            fontWeight = FontWeight.Bold,
+                            color = TextDarkBrown,
+                            modifier = Modifier.padding(top = 4.dp)
+                        )
+                        group.items.forEach { memo ->
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .background(CardWhite, RoundedCornerShape(12.dp))
+                                    .padding(12.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text("✅", fontSize = 18.sp)
+                                Spacer(Modifier.width(8.dp))
+                                Text(
+                                    memo.title,
+                                    fontSize = scaledSp(20),
+                                    color = TextDarkBrown,
+                                    fontWeight = FontWeight.Medium,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    modifier = Modifier.weight(1f)
+                                )
+                            }
                         }
                     }
                 }
@@ -583,33 +675,6 @@ private fun RateDetailDialog(
         },
         confirmButton = {}
     )
-}
-
-/** 详情行 — 图标 + 标签 + 数值 */
-@Composable
-private fun DetailRow(icon: String, label: String, value: String) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(CardWhite, RoundedCornerShape(12.dp))
-            .padding(horizontal = 16.dp, vertical = 14.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(icon, fontSize = 24.sp)
-        Spacer(Modifier.width(12.dp))
-        Text(
-            label,
-            fontSize = scaledSp(20),
-            color = TextDarkBrown,
-            modifier = Modifier.weight(1f)
-        )
-        Text(
-            value,
-            fontSize = scaledSp(22),
-            fontWeight = FontWeight.Bold,
-            color = PrimaryOrange
-        )
-    }
 }
 
 /** 弹窗底部大关闭按钮 */

@@ -50,9 +50,17 @@ class MemoRepository(private val memoDao: MemoDao) {
     fun getTotalCount(): Flow<Int> = memoDao.getTotalCount()
     fun getCompletedCount(): Flow<Int> = memoDao.getCompletedCount()
 
+    suspend fun getTotalCountOnce(): Int = memoDao.getTotalCountOnce()
+    suspend fun getCompletedCountOnce(): Int = memoDao.getCompletedCountOnce()
+
     // ── 统计详情 ──
 
     suspend fun getCountSince(since: Long): Int = memoDao.getCountSince(since)
+    suspend fun getCompletedCountSince(since: Long): Int = memoDao.getCompletedCountSince(since)
+    suspend fun getAllMemosSince(since: Long): List<Memo> =
+        memoDao.getAllMemosSince(since).map { it.toDomainModel() }
+    suspend fun getAllMemosSnapshot(): List<Memo> =
+        memoDao.getAllMemosSnapshot().map { it.toDomainModel() }
 
     suspend fun getRecentlyCompleted(since: Long, limit: Int = 10): List<Memo> =
         memoDao.getRecentlyCompleted(since, limit).map { it.toDomainModel() }

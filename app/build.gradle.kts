@@ -13,8 +13,8 @@ android {
         applicationId = "com.biewangle.dontforget"
         minSdk = 26
         targetSdk = 34
-        versionCode = 35
-        versionName = "3.5"
+        versionCode = 36
+        versionName = "3.6"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
