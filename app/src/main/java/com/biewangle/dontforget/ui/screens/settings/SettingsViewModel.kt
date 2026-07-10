@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.math.roundToInt
+import java.util.TimeZone
 
 /** 统计时段 */
 enum class StatsPeriod(val label: String) {
@@ -190,32 +191,36 @@ class SettingsViewModel(
     }
 
     private fun getPeriodStartTime(period: StatsPeriod): Long {
-        val cal = java.util.Calendar.getInstance()
+        // target_date 存储为 UTC 零点，查询也必须用 UTC 零点才能对上
+        val utcCal = java.util.Calendar.getInstance(TimeZone.getTimeZone("UTC"))
         val now = System.currentTimeMillis()
-        cal.timeInMillis = now
+        utcCal.setTimeInMillis(now)
         return when (period) {
             StatsPeriod.TODAY -> {
-                cal.set(java.util.Calendar.HOUR_OF_DAY, 0)
-                cal.set(java.util.Calendar.MINUTE, 0)
-                cal.set(java.util.Calendar.SECOND, 0)
-                cal.set(java.util.Calendar.MILLISECOND, 0)
-                cal.timeInMillis
+                utcCal.set(java.util.Calendar.HOUR_OF_DAY, 0)
+                utcCal.set(java.util.Calendar.MINUTE, 0)
+                utcCal.set(java.util.Calendar.SECOND, 0)
+                utcCal.set(java.util.Calendar.MILLISECOND, 0)
+                utcCal.timeInMillis
             }
             StatsPeriod.WEEK -> {
-                cal.set(java.util.Calendar.HOUR_OF_DAY, 0)
-                cal.set(java.util.Calendar.MINUTE, 0)
-                cal.set(java.util.Calendar.SECOND, 0)
-                cal.set(java.util.Calendar.MILLISECOND, 0)
-                cal.set(java.util.Calendar.DAY_OF_WEEK, java.util.Calendar.MONDAY)
-                cal.timeInMillis
+                // 先归零时分秒，再滚动到本周一（不用 set(DAY_OF_WEEK) 因为会滚到下周）
+                utcCal.set(java.util.Calendar.HOUR_OF_DAY, 0)
+                utcCal.set(java.util.Calendar.MINUTE, 0)
+                utcCal.set(java.util.Calendar.SECOND, 0)
+                utcCal.set(java.util.Calendar.MILLISECOND, 0)
+                val dayOfWeek = utcCal.get(java.util.Calendar.DAY_OF_WEEK)
+                val daysToMonday = if (dayOfWeek == java.util.Calendar.SUNDAY) 6 else dayOfWeek - java.util.Calendar.MONDAY
+                utcCal.add(java.util.Calendar.DAY_OF_MONTH, -daysToMonday)
+                utcCal.timeInMillis
             }
             StatsPeriod.MONTH -> {
-                cal.set(java.util.Calendar.DAY_OF_MONTH, 1)
-                cal.set(java.util.Calendar.HOUR_OF_DAY, 0)
-                cal.set(java.util.Calendar.MINUTE, 0)
-                cal.set(java.util.Calendar.SECOND, 0)
-                cal.set(java.util.Calendar.MILLISECOND, 0)
-                cal.timeInMillis
+                utcCal.set(java.util.Calendar.DAY_OF_MONTH, 1)
+                utcCal.set(java.util.Calendar.HOUR_OF_DAY, 0)
+                utcCal.set(java.util.Calendar.MINUTE, 0)
+                utcCal.set(java.util.Calendar.SECOND, 0)
+                utcCal.set(java.util.Calendar.MILLISECOND, 0)
+                utcCal.timeInMillis
             }
             StatsPeriod.ALL -> 0L
         }
@@ -223,34 +228,37 @@ class SettingsViewModel(
 
     /** 获取时段结束时间（不含），用于 range 查询 */
     private fun getPeriodEndTime(period: StatsPeriod): Long {
-        val cal = java.util.Calendar.getInstance()
-        cal.timeInMillis = System.currentTimeMillis()
+        // target_date 存储为 UTC 零点，查询范围end也必须用 UTC 零点
+        val utcCal = java.util.Calendar.getInstance(TimeZone.getTimeZone("UTC"))
+        utcCal.setTimeInMillis(System.currentTimeMillis())
         return when (period) {
             StatsPeriod.TODAY -> {
-                cal.set(java.util.Calendar.HOUR_OF_DAY, 0)
-                cal.set(java.util.Calendar.MINUTE, 0)
-                cal.set(java.util.Calendar.SECOND, 0)
-                cal.set(java.util.Calendar.MILLISECOND, 0)
-                cal.add(java.util.Calendar.DAY_OF_MONTH, 1)
-                cal.timeInMillis
+                utcCal.set(java.util.Calendar.HOUR_OF_DAY, 0)
+                utcCal.set(java.util.Calendar.MINUTE, 0)
+                utcCal.set(java.util.Calendar.SECOND, 0)
+                utcCal.set(java.util.Calendar.MILLISECOND, 0)
+                utcCal.add(java.util.Calendar.DAY_OF_MONTH, 1)
+                utcCal.timeInMillis
             }
             StatsPeriod.WEEK -> {
-                cal.set(java.util.Calendar.HOUR_OF_DAY, 0)
-                cal.set(java.util.Calendar.MINUTE, 0)
-                cal.set(java.util.Calendar.SECOND, 0)
-                cal.set(java.util.Calendar.MILLISECOND, 0)
-                cal.set(java.util.Calendar.DAY_OF_WEEK, java.util.Calendar.MONDAY)
-                cal.add(java.util.Calendar.WEEK_OF_MONTH, 1)
-                cal.timeInMillis
+                // 从本周一加7天得到下周一（本周结束）
+                utcCal.set(java.util.Calendar.HOUR_OF_DAY, 0)
+                utcCal.set(java.util.Calendar.MINUTE, 0)
+                utcCal.set(java.util.Calendar.SECOND, 0)
+                utcCal.set(java.util.Calendar.MILLISECOND, 0)
+                val dayOfWeek = utcCal.get(java.util.Calendar.DAY_OF_WEEK)
+                val daysToMonday = if (dayOfWeek == java.util.Calendar.SUNDAY) 6 else dayOfWeek - java.util.Calendar.MONDAY
+                utcCal.add(java.util.Calendar.DAY_OF_MONTH, -daysToMonday + 7)
+                utcCal.timeInMillis
             }
             StatsPeriod.MONTH -> {
-                cal.set(java.util.Calendar.DAY_OF_MONTH, 1)
-                cal.set(java.util.Calendar.HOUR_OF_DAY, 0)
-                cal.set(java.util.Calendar.MINUTE, 0)
-                cal.set(java.util.Calendar.SECOND, 0)
-                cal.set(java.util.Calendar.MILLISECOND, 0)
-                cal.add(java.util.Calendar.MONTH, 1)
-                cal.timeInMillis
+                utcCal.set(java.util.Calendar.DAY_OF_MONTH, 1)
+                utcCal.set(java.util.Calendar.HOUR_OF_DAY, 0)
+                utcCal.set(java.util.Calendar.MINUTE, 0)
+                utcCal.set(java.util.Calendar.SECOND, 0)
+                utcCal.set(java.util.Calendar.MILLISECOND, 0)
+                utcCal.add(java.util.Calendar.MONTH, 1)
+                utcCal.timeInMillis
             }
             StatsPeriod.ALL -> Long.MAX_VALUE
         }
@@ -305,77 +313,78 @@ class SettingsViewModel(
     /** 按时段对已完成备忘分组：今天→不分组，本周→按日，本月→按周，全部→按月 */
     private fun groupCompletedMemos(items: List<Memo>, period: StatsPeriod): List<CompletedGroup> {
         if (items.isEmpty()) return emptyList()
-        val cal = java.util.Calendar.getInstance()
-        val today = java.util.Calendar.getInstance()
+        val dayNames = arrayOf("周日", "周一", "周二", "周三", "周四", "周五", "周六")
 
         return when (period) {
             StatsPeriod.TODAY -> {
                 listOf(CompletedGroup("今天", items))
             }
             StatsPeriod.WEEK -> {
-                val todayStart = java.util.Calendar.getInstance().apply {
-                    set(java.util.Calendar.HOUR_OF_DAY, 0)
-                    set(java.util.Calendar.MINUTE, 0)
-                    set(java.util.Calendar.SECOND, 0)
-                    set(java.util.Calendar.MILLISECOND, 0)
-                }.timeInMillis
+                // 用 targetDate 分组（反映计划日期），而非 updatedAt（完成时间）
                 items.groupBy { memo ->
-                    cal.timeInMillis = memo.updatedAt
+                    val cal = java.util.Calendar.getInstance()
+                    cal.timeInMillis = memo.targetDate
                     cal.set(java.util.Calendar.HOUR_OF_DAY, 0)
                     cal.set(java.util.Calendar.MINUTE, 0)
                     cal.set(java.util.Calendar.SECOND, 0)
                     cal.set(java.util.Calendar.MILLISECOND, 0)
                     cal.timeInMillis
                 }.map { (dateStart, memos) ->
-                    val daysDiff = ((todayStart - dateStart) / (24 * 60 * 60 * 1000)).toInt()
-                    val label = when (daysDiff) {
-                        0 -> "今天"
-                        1 -> "昨天"
-                        2 -> "前天"
-                        else -> "${daysDiff}天前"
-                    }
+                    val cal = java.util.Calendar.getInstance()
+                    cal.timeInMillis = dateStart
+                    val label = dayNames[cal.get(java.util.Calendar.DAY_OF_WEEK) - 1]
                     CompletedGroup(dateLabel = label, items = memos)
-                }.sortedByDescending { it.items.first().updatedAt }
+                }.sortedByDescending { it.items.first().targetDate }
             }
             StatsPeriod.MONTH -> {
-                // 获取本周一的零点作为基准
-                val thisMonday = java.util.Calendar.getInstance().apply {
-                    set(java.util.Calendar.HOUR_OF_DAY, 0)
-                    set(java.util.Calendar.MINUTE, 0)
-                    set(java.util.Calendar.SECOND, 0)
-                    set(java.util.Calendar.MILLISECOND, 0)
-                    set(java.util.Calendar.DAY_OF_WEEK, java.util.Calendar.MONDAY)
-                }.timeInMillis
+                // 用 UTC 计算本周一基准，避免 set(DAY_OF_WEEK) 滚到上周的坑
+                val utcCal = java.util.Calendar.getInstance(java.util.TimeZone.getTimeZone("UTC"))
+                utcCal.setTimeInMillis(System.currentTimeMillis())
+                utcCal.set(java.util.Calendar.HOUR_OF_DAY, 0)
+                utcCal.set(java.util.Calendar.MINUTE, 0)
+                utcCal.set(java.util.Calendar.SECOND, 0)
+                utcCal.set(java.util.Calendar.MILLISECOND, 0)
+                val dayOfWeek = utcCal.get(java.util.Calendar.DAY_OF_WEEK)
+                val daysToMonday = if (dayOfWeek == java.util.Calendar.SUNDAY) 6 else dayOfWeek - java.util.Calendar.MONDAY
+                utcCal.add(java.util.Calendar.DAY_OF_MONTH, -daysToMonday)
+                val thisMondayStart = utcCal.timeInMillis
                 val weekMillis = 7L * 24 * 60 * 60 * 1000
 
+                // 用 targetDate 找所在周的周一作为 group key
                 items.groupBy { memo ->
-                    cal.timeInMillis = memo.updatedAt
+                    val cal = java.util.Calendar.getInstance()
+                    cal.timeInMillis = memo.targetDate
                     cal.set(java.util.Calendar.HOUR_OF_DAY, 0)
                     cal.set(java.util.Calendar.MINUTE, 0)
                     cal.set(java.util.Calendar.SECOND, 0)
                     cal.set(java.util.Calendar.MILLISECOND, 0)
-                    cal.set(java.util.Calendar.DAY_OF_WEEK, java.util.Calendar.MONDAY)
+                    // 计算该日期所在周的周一
+                    val d = cal.get(java.util.Calendar.DAY_OF_WEEK)
+                    val offset = if (d == java.util.Calendar.SUNDAY) 6 else d - java.util.Calendar.MONDAY
+                    cal.add(java.util.Calendar.DAY_OF_MONTH, -offset)
                     cal.timeInMillis
                 }.map { (weekStart, memos) ->
-                    val weeksDiff = ((thisMonday - weekStart) / weekMillis).toInt()
+                    val weeksDiff = ((thisMondayStart - weekStart) / weekMillis).toInt()
                     val label = when (weeksDiff) {
                         0 -> "本周"
                         1 -> "上周"
                         else -> "${weeksDiff}周前"
                     }
                     CompletedGroup(dateLabel = label, items = memos)
-                }.sortedByDescending { it.items.first().updatedAt }
+                }.sortedByDescending { it.items.first().targetDate }
             }
             StatsPeriod.ALL -> {
                 items.groupBy { memo ->
-                    cal.timeInMillis = memo.updatedAt
+                    val cal = java.util.Calendar.getInstance()
+                    cal.timeInMillis = memo.targetDate
                     "${cal.get(java.util.Calendar.YEAR)}-${cal.get(java.util.Calendar.MONTH)}"
                 }.map { (_, memos) ->
-                    cal.timeInMillis = memos.first().updatedAt
+                    val cal = java.util.Calendar.getInstance()
+                    cal.timeInMillis = memos.first().targetDate
                     val year = cal.get(java.util.Calendar.YEAR)
                     val month = cal.get(java.util.Calendar.MONTH) + 1
                     CompletedGroup(dateLabel = "${year}年${month}月", items = memos)
-                }.sortedByDescending { it.items.first().updatedAt }
+                }.sortedByDescending { it.items.first().targetDate }
             }
         }
     }
