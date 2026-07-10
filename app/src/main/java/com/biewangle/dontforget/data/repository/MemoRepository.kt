@@ -67,4 +67,13 @@ class MemoRepository(private val memoDao: MemoDao) {
 
     suspend fun getRecentlyCompletedAll(limit: Int = 10): List<Memo> =
         memoDao.getRecentlyCompletedAll(limit).map { it.toDomainModel() }
+
+    // ── 范围查询 ──
+
+    suspend fun getCountBetween(start: Long, end: Long): Int = memoDao.getCountBetween(start, end)
+    suspend fun getCompletedCountBetween(start: Long, end: Long): Int = memoDao.getCompletedCountBetween(start, end)
+    suspend fun getAllMemosBetween(start: Long, end: Long): List<Memo> =
+        memoDao.getAllMemosBetween(start, end).map { it.toDomainModel() }
+    suspend fun getRecentlyCompletedBetween(start: Long, end: Long, limit: Int = 10): List<Memo> =
+        memoDao.getRecentlyCompletedBetween(start, end, limit).map { it.toDomainModel() }
 }

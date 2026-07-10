@@ -263,6 +263,9 @@ fun SettingsScreen(
         )
 
         Spacer(Modifier.height(16.dp))
+
+        // 底部留白，滚动到底时紧贴导航栏顶部
+        Spacer(Modifier.height(120.dp))
     }
 
     // ── 统计详情弹窗 ──

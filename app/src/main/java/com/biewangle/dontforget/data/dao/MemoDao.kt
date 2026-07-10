@@ -40,21 +40,39 @@ interface MemoDao {
 
     // ── 统计详情查询 ──
 
-    /** 获取某天开始时间之后创建的备忘数量 */
-    @Query("SELECT COUNT(*) FROM memos WHERE created_at >= :since")
+    /** 获取目标日期在某时间点之后的备忘数量 */
+    @Query("SELECT COUNT(*) FROM memos WHERE target_date >= :since")
     suspend fun getCountSince(since: Long): Int
 
-    /** 获取某天开始时间之后创建且已完成的备忘数量 */
-    @Query("SELECT COUNT(*) FROM memos WHERE created_at >= :since AND is_completed = 1")
+    /** 获取目标日期在某时间点之后且已完成的备忘数量 */
+    @Query("SELECT COUNT(*) FROM memos WHERE target_date >= :since AND is_completed = 1")
     suspend fun getCompletedCountSince(since: Long): Int
 
-    /** 获取某天开始时间之后创建的所有备忘（按创建时间倒序） */
-    @Query("SELECT * FROM memos WHERE created_at >= :since ORDER BY created_at DESC")
+    /** 获取目标日期在某时间点之后的所有备忘（按目标日期倒序） */
+    @Query("SELECT * FROM memos WHERE target_date >= :since ORDER BY target_date DESC")
     suspend fun getAllMemosSince(since: Long): List<MemoEntity>
 
-    /** 获取在时间范围内创建的备忘中，已完成的备忘录 */
-    @Query("SELECT * FROM memos WHERE is_completed = 1 AND created_at >= :since ORDER BY updated_at DESC LIMIT :limit")
+    /** 获取目标日期在某时间点之后的已完成备忘录（按完成时间倒序） */
+    @Query("SELECT * FROM memos WHERE is_completed = 1 AND target_date >= :since ORDER BY updated_at DESC LIMIT :limit")
     suspend fun getRecentlyCompleted(since: Long, limit: Int = 10): List<MemoEntity>
+
+    // ── 范围查询（用于"今天"等需要严格日期区间的统计） ──
+
+    /** 获取目标日期在 [start, end) 范围内的备忘数量 */
+    @Query("SELECT COUNT(*) FROM memos WHERE target_date >= :start AND target_date < :end")
+    suspend fun getCountBetween(start: Long, end: Long): Int
+
+    /** 获取目标日期在 [start, end) 范围内且已完成的备忘数量 */
+    @Query("SELECT COUNT(*) FROM memos WHERE target_date >= :start AND target_date < :end AND is_completed = 1")
+    suspend fun getCompletedCountBetween(start: Long, end: Long): Int
+
+    /** 获取目标日期在 [start, end) 范围内的所有备忘 */
+    @Query("SELECT * FROM memos WHERE target_date >= :start AND target_date < :end ORDER BY target_date DESC")
+    suspend fun getAllMemosBetween(start: Long, end: Long): List<MemoEntity>
+
+    /** 获取目标日期在 [start, end) 范围内的已完成备忘录 */
+    @Query("SELECT * FROM memos WHERE is_completed = 1 AND target_date >= :start AND target_date < :end ORDER BY updated_at DESC LIMIT :limit")
+    suspend fun getRecentlyCompletedBetween(start: Long, end: Long, limit: Int = 10): List<MemoEntity>
 
     /** 获取所有已完成的备忘，按更新时间倒序 */
     @Query("SELECT * FROM memos WHERE is_completed = 1 ORDER BY updated_at DESC LIMIT :limit")

@@ -168,13 +168,13 @@ class SettingsViewModel(
         return withContext(Dispatchers.IO) {
             val (total, completed) = when (period) {
                 StatsPeriod.TODAY, StatsPeriod.WEEK, StatsPeriod.MONTH -> {
-                    val since = getPeriodStartTime(period)
-                    val t = memoRepository.getCountSince(since)
-                    val c = memoRepository.getCompletedCountSince(since)
+                    val start = getPeriodStartTime(period)
+                    val end = getPeriodEndTime(period)
+                    val t = memoRepository.getCountBetween(start, end)
+                    val c = memoRepository.getCompletedCountBetween(start, end)
                     t to c
                 }
                 StatsPeriod.ALL -> {
-                    // 用当前缓存值避免重复查询
                     val t = memoRepository.getTotalCountOnce()
                     val c = memoRepository.getCompletedCountOnce()
                     t to c
@@ -221,6 +221,41 @@ class SettingsViewModel(
         }
     }
 
+    /** 获取时段结束时间（不含），用于 range 查询 */
+    private fun getPeriodEndTime(period: StatsPeriod): Long {
+        val cal = java.util.Calendar.getInstance()
+        cal.timeInMillis = System.currentTimeMillis()
+        return when (period) {
+            StatsPeriod.TODAY -> {
+                cal.set(java.util.Calendar.HOUR_OF_DAY, 0)
+                cal.set(java.util.Calendar.MINUTE, 0)
+                cal.set(java.util.Calendar.SECOND, 0)
+                cal.set(java.util.Calendar.MILLISECOND, 0)
+                cal.add(java.util.Calendar.DAY_OF_MONTH, 1)
+                cal.timeInMillis
+            }
+            StatsPeriod.WEEK -> {
+                cal.set(java.util.Calendar.HOUR_OF_DAY, 0)
+                cal.set(java.util.Calendar.MINUTE, 0)
+                cal.set(java.util.Calendar.SECOND, 0)
+                cal.set(java.util.Calendar.MILLISECOND, 0)
+                cal.set(java.util.Calendar.DAY_OF_WEEK, java.util.Calendar.MONDAY)
+                cal.add(java.util.Calendar.WEEK_OF_MONTH, 1)
+                cal.timeInMillis
+            }
+            StatsPeriod.MONTH -> {
+                cal.set(java.util.Calendar.DAY_OF_MONTH, 1)
+                cal.set(java.util.Calendar.HOUR_OF_DAY, 0)
+                cal.set(java.util.Calendar.MINUTE, 0)
+                cal.set(java.util.Calendar.SECOND, 0)
+                cal.set(java.util.Calendar.MILLISECOND, 0)
+                cal.add(java.util.Calendar.MONTH, 1)
+                cal.timeInMillis
+            }
+            StatsPeriod.ALL -> Long.MAX_VALUE
+        }
+    }
+
     /** 按时段对备忘分组：今天→不分组，本周→按日，本月→按周，全部→按月 */
     private fun groupMemos(items: List<Memo>, period: StatsPeriod): List<MemoGroup> {
         if (items.isEmpty()) return emptyList()
@@ -234,35 +269,113 @@ class SettingsViewModel(
             StatsPeriod.WEEK -> {
                 val dayNames = arrayOf("周日", "周一", "周二", "周三", "周四", "周五", "周六")
                 items.groupBy { memo ->
-                    cal.timeInMillis = memo.createdAt
+                    cal.timeInMillis = memo.targetDate
                     cal.get(java.util.Calendar.DAY_OF_WEEK)
                 }.map { (dayOfWeek, memos) ->
-                    cal.timeInMillis = memos.first().createdAt
+                    cal.timeInMillis = memos.first().targetDate
                     val isToday = cal.get(java.util.Calendar.DAY_OF_YEAR) == today.get(java.util.Calendar.DAY_OF_YEAR)
                             && cal.get(java.util.Calendar.YEAR) == today.get(java.util.Calendar.YEAR)
                     val label = if (isToday) "今天" else dayNames[dayOfWeek - 1]
                     MemoGroup(label, memos)
-                }.sortedByDescending { it.items.first().createdAt }
+                }.sortedByDescending { it.items.first().targetDate }
             }
             StatsPeriod.MONTH -> {
                 items.groupBy { memo ->
-                    cal.timeInMillis = memo.createdAt
+                    cal.timeInMillis = memo.targetDate
                     // 按 ISO 周数分组
                     cal.get(java.util.Calendar.WEEK_OF_MONTH)
                 }.map { (weekOfMonth, memos) ->
                     MemoGroup("第${weekOfMonth}周", memos)
-                }.sortedByDescending { it.items.first().createdAt }
+                }.sortedByDescending { it.items.first().targetDate }
             }
             StatsPeriod.ALL -> {
                 items.groupBy { memo ->
-                    cal.timeInMillis = memo.createdAt
+                    cal.timeInMillis = memo.targetDate
                     "${cal.get(java.util.Calendar.YEAR)}-${cal.get(java.util.Calendar.MONTH)}"
                 }.map { (_, memos) ->
-                    cal.timeInMillis = memos.first().createdAt
+                    cal.timeInMillis = memos.first().targetDate
                     val year = cal.get(java.util.Calendar.YEAR)
                     val month = cal.get(java.util.Calendar.MONTH) + 1
                     MemoGroup("${year}年${month}月", memos)
-                }.sortedByDescending { it.items.first().createdAt }
+                }.sortedByDescending { it.items.first().targetDate }
+            }
+        }
+    }
+
+    /** 按时段对已完成备忘分组：今天→不分组，本周→按日，本月→按周，全部→按月 */
+    private fun groupCompletedMemos(items: List<Memo>, period: StatsPeriod): List<CompletedGroup> {
+        if (items.isEmpty()) return emptyList()
+        val cal = java.util.Calendar.getInstance()
+        val today = java.util.Calendar.getInstance()
+
+        return when (period) {
+            StatsPeriod.TODAY -> {
+                listOf(CompletedGroup("今天", items))
+            }
+            StatsPeriod.WEEK -> {
+                val todayStart = java.util.Calendar.getInstance().apply {
+                    set(java.util.Calendar.HOUR_OF_DAY, 0)
+                    set(java.util.Calendar.MINUTE, 0)
+                    set(java.util.Calendar.SECOND, 0)
+                    set(java.util.Calendar.MILLISECOND, 0)
+                }.timeInMillis
+                items.groupBy { memo ->
+                    cal.timeInMillis = memo.updatedAt
+                    cal.set(java.util.Calendar.HOUR_OF_DAY, 0)
+                    cal.set(java.util.Calendar.MINUTE, 0)
+                    cal.set(java.util.Calendar.SECOND, 0)
+                    cal.set(java.util.Calendar.MILLISECOND, 0)
+                    cal.timeInMillis
+                }.map { (dateStart, memos) ->
+                    val daysDiff = ((todayStart - dateStart) / (24 * 60 * 60 * 1000)).toInt()
+                    val label = when (daysDiff) {
+                        0 -> "今天"
+                        1 -> "昨天"
+                        2 -> "前天"
+                        else -> "${daysDiff}天前"
+                    }
+                    CompletedGroup(dateLabel = label, items = memos)
+                }.sortedByDescending { it.items.first().updatedAt }
+            }
+            StatsPeriod.MONTH -> {
+                // 获取本周一的零点作为基准
+                val thisMonday = java.util.Calendar.getInstance().apply {
+                    set(java.util.Calendar.HOUR_OF_DAY, 0)
+                    set(java.util.Calendar.MINUTE, 0)
+                    set(java.util.Calendar.SECOND, 0)
+                    set(java.util.Calendar.MILLISECOND, 0)
+                    set(java.util.Calendar.DAY_OF_WEEK, java.util.Calendar.MONDAY)
+                }.timeInMillis
+                val weekMillis = 7L * 24 * 60 * 60 * 1000
+
+                items.groupBy { memo ->
+                    cal.timeInMillis = memo.updatedAt
+                    cal.set(java.util.Calendar.HOUR_OF_DAY, 0)
+                    cal.set(java.util.Calendar.MINUTE, 0)
+                    cal.set(java.util.Calendar.SECOND, 0)
+                    cal.set(java.util.Calendar.MILLISECOND, 0)
+                    cal.set(java.util.Calendar.DAY_OF_WEEK, java.util.Calendar.MONDAY)
+                    cal.timeInMillis
+                }.map { (weekStart, memos) ->
+                    val weeksDiff = ((thisMonday - weekStart) / weekMillis).toInt()
+                    val label = when (weeksDiff) {
+                        0 -> "本周"
+                        1 -> "上周"
+                        else -> "${weeksDiff}周前"
+                    }
+                    CompletedGroup(dateLabel = label, items = memos)
+                }.sortedByDescending { it.items.first().updatedAt }
+            }
+            StatsPeriod.ALL -> {
+                items.groupBy { memo ->
+                    cal.timeInMillis = memo.updatedAt
+                    "${cal.get(java.util.Calendar.YEAR)}-${cal.get(java.util.Calendar.MONTH)}"
+                }.map { (_, memos) ->
+                    cal.timeInMillis = memos.first().updatedAt
+                    val year = cal.get(java.util.Calendar.YEAR)
+                    val month = cal.get(java.util.Calendar.MONTH) + 1
+                    CompletedGroup(dateLabel = "${year}年${month}月", items = memos)
+                }.sortedByDescending { it.items.first().updatedAt }
             }
         }
     }
@@ -317,11 +430,13 @@ class SettingsViewModel(
                 when (dialog) {
                     StatsDetailDialog.TOTAL -> {
                         val period = _selectedPeriod.value
-                        val items = if (period == StatsPeriod.ALL) {
-                            memoRepository.getAllMemosSnapshot()
-                        } else {
-                            val since = getPeriodStartTime(period)
-                            memoRepository.getAllMemosSince(since)
+                        val items = when (period) {
+                            StatsPeriod.ALL -> memoRepository.getAllMemosSnapshot()
+                            else -> {
+                                val start = getPeriodStartTime(period)
+                                val end = getPeriodEndTime(period)
+                                memoRepository.getAllMemosBetween(start, end)
+                            }
                         }
                         val groups = groupMemos(items, period)
                         _totalDetailData.value = TotalDetailData(
@@ -331,27 +446,15 @@ class SettingsViewModel(
                     }
                     StatsDetailDialog.COMPLETED -> {
                         val period = _selectedPeriod.value
-                        val items = if (period == StatsPeriod.ALL) {
-                            memoRepository.getRecentlyCompletedAll(limit = 999)
-                        } else {
-                            val since = getPeriodStartTime(period)
-                            memoRepository.getRecentlyCompleted(since, limit = 999)
+                        val items = when (period) {
+                            StatsPeriod.ALL -> memoRepository.getRecentlyCompletedAll(limit = 999)
+                            else -> {
+                                val start = getPeriodStartTime(period)
+                                val end = getPeriodEndTime(period)
+                                memoRepository.getRecentlyCompletedBetween(start, end, limit = 999)
+                            }
                         }
-                        // 按完成日期（updatedAt）分组
-                        val cal = java.util.Calendar.getInstance()
-                        val groups = items.groupBy { memo ->
-                            cal.timeInMillis = memo.updatedAt
-                            "${cal.get(java.util.Calendar.YEAR)}-${cal.get(java.util.Calendar.MONTH)}-${cal.get(java.util.Calendar.DAY_OF_MONTH)}"
-                        }.map { (_, memos) ->
-                            cal.timeInMillis = memos.first().updatedAt
-                            val month = cal.get(java.util.Calendar.MONTH) + 1
-                            val day = cal.get(java.util.Calendar.DAY_OF_MONTH)
-                            val today = java.util.Calendar.getInstance()
-                            val isToday = cal.get(java.util.Calendar.YEAR) == today.get(java.util.Calendar.YEAR)
-                                    && cal.get(java.util.Calendar.DAY_OF_YEAR) == today.get(java.util.Calendar.DAY_OF_YEAR)
-                            val label = if (isToday) "今天" else "${month}月${day}日"
-                            CompletedGroup(dateLabel = label, items = memos)
-                        }
+                        val groups = groupCompletedMemos(items, period)
                         _completedDetailData.value = CompletedDetailData(
                             total = _stats.value.completed,
                             groups = groups
