@@ -17,56 +17,47 @@ fun biewangleTypography(fontScale: Float = 1.0f): Typography {
         headlineLarge = TextStyle(
             fontWeight = FontWeight.Bold,
             fontSize = spScaled(32).sp,
-            lineHeight = spScaled(40).sp,
-            color = TextDarkBrown
+            lineHeight = spScaled(40).sp
         ),
         headlineMedium = TextStyle(
             fontWeight = FontWeight.Bold,
             fontSize = spScaled(26).sp,
-            lineHeight = spScaled(34).sp,
-            color = TextDarkBrown
+            lineHeight = spScaled(34).sp
         ),
         titleLarge = TextStyle(
             fontWeight = FontWeight.SemiBold,
             fontSize = spScaled(24).sp,
-            lineHeight = spScaled(32).sp,
-            color = TextDarkBrown
+            lineHeight = spScaled(32).sp
         ),
         titleMedium = TextStyle(
             fontWeight = FontWeight.Medium,
             fontSize = spScaled(22).sp,
-            lineHeight = spScaled(30).sp,
-            color = TextDarkBrown
+            lineHeight = spScaled(30).sp
         ),
         bodyLarge = TextStyle(
             fontWeight = FontWeight.Normal,
             fontSize = spScaled(22).sp,
-            lineHeight = spScaled(30).sp,
-            color = TextDarkBrown
+            lineHeight = spScaled(30).sp
         ),
         bodyMedium = TextStyle(
             fontWeight = FontWeight.Normal,
             fontSize = spScaled(20).sp,
-            lineHeight = spScaled(28).sp,
-            color = TextDarkBrown
+            lineHeight = spScaled(28).sp
         ),
         labelLarge = TextStyle(
             fontWeight = FontWeight.SemiBold,
             fontSize = spScaled(22).sp,
-            lineHeight = spScaled(28).sp,
-            color = TextDarkBrown
+            lineHeight = spScaled(28).sp
         ),
         labelMedium = TextStyle(
             fontWeight = FontWeight.Medium,
             fontSize = spScaled(18).sp,
-            lineHeight = spScaled(24).sp,
-            color = TextWarmGray
+            lineHeight = spScaled(24).sp
         ),
         bodySmall = TextStyle(
             fontWeight = FontWeight.Normal,
             fontSize = spScaled(16).sp,
-            lineHeight = spScaled(22).sp,
-            color = TextWarmGray
+            lineHeight = spScaled(22).sp
         )
     )
 }
