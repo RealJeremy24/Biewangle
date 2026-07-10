@@ -124,6 +124,8 @@ fun SettingsScreen(
             }
         }
 
+        Spacer(Modifier.height(16.dp))
+
         // 统计卡片
         Row(
             modifier = Modifier
