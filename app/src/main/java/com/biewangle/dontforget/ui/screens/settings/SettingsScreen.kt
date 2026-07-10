@@ -1,5 +1,6 @@
 package com.biewangle.dontforget.ui.screens.settings
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -19,7 +20,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Switch
@@ -33,8 +33,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -492,7 +495,7 @@ private fun CompletedDetailDialog(
     )
 }
 
-/** 完成率 — 进度条 + 鼓励语 */
+/** 完成率 — 圆环进度 + 妈妈贴纸 */
 @Composable
 private fun RateDetailDialog(
     data: RateDetailData,
@@ -513,53 +516,72 @@ private fun RateDetailDialog(
             )
         },
         text = {
+            val fraction = if (data.total > 0) data.completed.toFloat() / data.total else 0f
             Column(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // 超大百分比
-                Text(
-                    data.ratePercent,
-                    fontSize = scaledSp(48),
-                    fontWeight = FontWeight.Bold,
-                    color = PrimaryOrange
-                )
+                // 圆环进度 — 百分比在环心
+                Box(
+                    modifier = Modifier.size(180.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Canvas(modifier = Modifier.fillMaxSize()) {
+                        val strokeW = 20.dp.toPx()
+                        val diameter = size.minDimension - strokeW
+                        val topLeft = Offset(
+                            (size.width - diameter) / 2f,
+                            (size.height - diameter) / 2f
+                        )
+                        val arcSize = Size(diameter, diameter)
+                        // 底环
+                        drawArc(
+                            color = ChipUnselected,
+                            startAngle = -90f,
+                            sweepAngle = 360f,
+                            useCenter = false,
+                            topLeft = topLeft,
+                            size = arcSize,
+                            style = Stroke(width = strokeW, cap = StrokeCap.Round)
+                        )
+                        // 进度环
+                        drawArc(
+                            color = PrimaryOrange,
+                            startAngle = -90f,
+                            sweepAngle = 360f * fraction,
+                            useCenter = false,
+                            topLeft = topLeft,
+                            size = arcSize,
+                            style = Stroke(width = strokeW, cap = StrokeCap.Round)
+                        )
+                    }
+                    Text(
+                        data.ratePercent,
+                        fontSize = scaledSp(44),
+                        fontWeight = FontWeight.Bold,
+                        color = PrimaryOrange
+                    )
+                }
+                Spacer(modifier = Modifier.height(12.dp))
                 Text(
                     "${data.completed} / ${data.total} 条已完成",
                     fontSize = scaledSp(18),
                     color = TextWarmGray
                 )
-                // 进度条
-                LinearProgressIndicator(
-                    progress = { if (data.total > 0) data.completed.toFloat() / data.total else 0f },
+                Spacer(modifier = Modifier.height(8.dp))
+                // 妈妈贴纸 — 底边贴紧下方关闭按钮
+                Image(
+                    painter = painterResource(id = R.drawable.mama7),
+                    contentDescription = null,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(16.dp)
-                        .background(ChipUnselected, RoundedCornerShape(8.dp)),
-                    color = PrimaryOrange,
-                    trackColor = ChipUnselected,
+                        .height(160.dp)
                 )
-                // 鼓励语
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(EncourageBg, RoundedCornerShape(16.dp))
-                        .padding(16.dp)
-                ) {
-                    Text(
-                        data.encourageMessage,
-                        fontSize = scaledSp(20),
-                        color = TextDarkBrown,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
+                // 关闭按钮移入正文区，贴纸零间距压在其上沿
+                DialogCloseButton(onDismiss)
             }
         },
-        confirmButton = {
-            DialogCloseButton(onDismiss)
-        }
+        confirmButton = {}
     )
 }
 
