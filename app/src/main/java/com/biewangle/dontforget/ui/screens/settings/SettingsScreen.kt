@@ -251,7 +251,7 @@ fun SettingsScreen(
             onSliderChange = { viewModel.updateFontScaleFromSlider(it) }
         )
 
-        Spacer(Modifier.height(24.dp))
+        Spacer(Modifier.height(12.dp))
 
         // 版本信息
         Text(
@@ -262,10 +262,7 @@ fun SettingsScreen(
             modifier = Modifier.fillMaxWidth()
         )
 
-        Spacer(Modifier.height(16.dp))
-
-        // 底部留白，滚动到底时紧贴导航栏顶部
-        Spacer(Modifier.height(120.dp))
+        Spacer(Modifier.height(8.dp))
     }
 
     // ── 统计详情弹窗 ──

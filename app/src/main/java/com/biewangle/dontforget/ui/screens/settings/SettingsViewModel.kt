@@ -288,12 +288,39 @@ class SettingsViewModel(
                 }.sortedByDescending { it.items.first().targetDate }
             }
             StatsPeriod.MONTH -> {
+                // 用 UTC 计算相对标签：本周、下周、上周
+                val utcCal = java.util.Calendar.getInstance(java.util.TimeZone.getTimeZone("UTC"))
+                utcCal.setTimeInMillis(System.currentTimeMillis())
+                utcCal.set(java.util.Calendar.HOUR_OF_DAY, 0)
+                utcCal.set(java.util.Calendar.MINUTE, 0)
+                utcCal.set(java.util.Calendar.SECOND, 0)
+                utcCal.set(java.util.Calendar.MILLISECOND, 0)
+                val dayOfWeek = utcCal.get(java.util.Calendar.DAY_OF_WEEK)
+                val daysToMonday = if (dayOfWeek == java.util.Calendar.SUNDAY) 6 else dayOfWeek - java.util.Calendar.MONDAY
+                utcCal.add(java.util.Calendar.DAY_OF_MONTH, -daysToMonday)
+                val thisMondayStart = utcCal.timeInMillis
+                val weekMillis = 7L * 24 * 60 * 60 * 1000
+
                 items.groupBy { memo ->
+                    val cal = java.util.Calendar.getInstance(java.util.TimeZone.getTimeZone("UTC"))
                     cal.timeInMillis = memo.targetDate
-                    // 按 ISO 周数分组
-                    cal.get(java.util.Calendar.WEEK_OF_MONTH)
-                }.map { (weekOfMonth, memos) ->
-                    MemoGroup("第${weekOfMonth}周", memos)
+                    cal.set(java.util.Calendar.HOUR_OF_DAY, 0)
+                    cal.set(java.util.Calendar.MINUTE, 0)
+                    cal.set(java.util.Calendar.SECOND, 0)
+                    cal.set(java.util.Calendar.MILLISECOND, 0)
+                    val d = cal.get(java.util.Calendar.DAY_OF_WEEK)
+                    val offset = if (d == java.util.Calendar.SUNDAY) 6 else d - java.util.Calendar.MONDAY
+                    cal.add(java.util.Calendar.DAY_OF_MONTH, -offset)
+                    cal.timeInMillis
+                }.map { (weekStart, memos) ->
+                    val weeksDiff = ((weekStart - thisMondayStart) / weekMillis).toInt()
+                    val label = when (weeksDiff) {
+                        0 -> "本周"
+                        1 -> "下周"
+                        -1 -> "上周"
+                        else -> if (weeksDiff > 1) "${weeksDiff}周后" else "${-weeksDiff}周前"
+                    }
+                    MemoGroup(label, memos)
                 }.sortedByDescending { it.items.first().targetDate }
             }
             StatsPeriod.ALL -> {
@@ -321,6 +348,15 @@ class SettingsViewModel(
             }
             StatsPeriod.WEEK -> {
                 // 用 targetDate 分组（反映计划日期），而非 updatedAt（完成时间）
+                // 先算今天0点作为基准
+                val todayCal = java.util.Calendar.getInstance()
+                todayCal.set(java.util.Calendar.HOUR_OF_DAY, 0)
+                todayCal.set(java.util.Calendar.MINUTE, 0)
+                todayCal.set(java.util.Calendar.SECOND, 0)
+                todayCal.set(java.util.Calendar.MILLISECOND, 0)
+                val todayStart = todayCal.timeInMillis
+                val dayMillis = 24L * 60 * 60 * 1000
+
                 items.groupBy { memo ->
                     val cal = java.util.Calendar.getInstance()
                     cal.timeInMillis = memo.targetDate
@@ -330,14 +366,18 @@ class SettingsViewModel(
                     cal.set(java.util.Calendar.MILLISECOND, 0)
                     cal.timeInMillis
                 }.map { (dateStart, memos) ->
-                    val cal = java.util.Calendar.getInstance()
-                    cal.timeInMillis = dateStart
-                    val label = dayNames[cal.get(java.util.Calendar.DAY_OF_WEEK) - 1]
+                    val daysDiff = ((dateStart - todayStart) / dayMillis).toInt()
+                    val label = when (daysDiff) {
+                        0 -> "今天"
+                        1 -> "明天"
+                        -1 -> "昨天"
+                        else -> dayNames[java.util.Calendar.getInstance().apply { timeInMillis = dateStart }.get(java.util.Calendar.DAY_OF_WEEK) - 1]
+                    }
                     CompletedGroup(dateLabel = label, items = memos)
                 }.sortedByDescending { it.items.first().targetDate }
             }
             StatsPeriod.MONTH -> {
-                // 用 UTC 计算本周一基准，避免 set(DAY_OF_WEEK) 滚到上周的坑
+                // 用 UTC 计算本周一基准
                 val utcCal = java.util.Calendar.getInstance(java.util.TimeZone.getTimeZone("UTC"))
                 utcCal.setTimeInMillis(System.currentTimeMillis())
                 utcCal.set(java.util.Calendar.HOUR_OF_DAY, 0)
@@ -350,25 +390,25 @@ class SettingsViewModel(
                 val thisMondayStart = utcCal.timeInMillis
                 val weekMillis = 7L * 24 * 60 * 60 * 1000
 
-                // 用 targetDate 找所在周的周一作为 group key
+                // 用 UTC 计算 targetDate 所在周的周一作为 group key
                 items.groupBy { memo ->
-                    val cal = java.util.Calendar.getInstance()
+                    val cal = java.util.Calendar.getInstance(java.util.TimeZone.getTimeZone("UTC"))
                     cal.timeInMillis = memo.targetDate
                     cal.set(java.util.Calendar.HOUR_OF_DAY, 0)
                     cal.set(java.util.Calendar.MINUTE, 0)
                     cal.set(java.util.Calendar.SECOND, 0)
                     cal.set(java.util.Calendar.MILLISECOND, 0)
-                    // 计算该日期所在周的周一
                     val d = cal.get(java.util.Calendar.DAY_OF_WEEK)
                     val offset = if (d == java.util.Calendar.SUNDAY) 6 else d - java.util.Calendar.MONDAY
                     cal.add(java.util.Calendar.DAY_OF_MONTH, -offset)
                     cal.timeInMillis
                 }.map { (weekStart, memos) ->
-                    val weeksDiff = ((thisMondayStart - weekStart) / weekMillis).toInt()
+                    val weeksDiff = ((weekStart - thisMondayStart) / weekMillis).toInt()
                     val label = when (weeksDiff) {
                         0 -> "本周"
-                        1 -> "上周"
-                        else -> "${weeksDiff}周前"
+                        1 -> "下周"
+                        -1 -> "上周"
+                        else -> if (weeksDiff > 1) "${weeksDiff}周后" else "${-weeksDiff}周前"
                     }
                     CompletedGroup(dateLabel = label, items = memos)
                 }.sortedByDescending { it.items.first().targetDate }
