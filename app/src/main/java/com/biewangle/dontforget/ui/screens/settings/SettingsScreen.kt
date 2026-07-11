@@ -45,6 +45,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.biewangle.dontforget.R
@@ -85,12 +86,16 @@ fun SettingsScreen(
 
     val context = LocalContext.current
 
-    Column(
+    Box(
         modifier = Modifier
             .fillMaxSize()
             .background(BackgroundWarm)
-            .verticalScroll(rememberScrollState())
     ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+        ) {
         // 品牌顶部栏 — 暖橙渐变
         Box(
             modifier = Modifier
@@ -251,18 +256,20 @@ fun SettingsScreen(
             onSliderChange = { viewModel.updateFontScaleFromSlider(it) }
         )
 
-        Spacer(Modifier.height(12.dp))
+        Spacer(Modifier.height(8.dp))
+    }
 
-        // 版本信息
+        // 版本信息 — 在显示设置和导航栏之间居中
         Text(
-            text = "别忘乐 v1.0",
+            text = stringResource(R.string.version),
             fontSize = scaledSp(16),
             color = TextWarmGray,
             textAlign = TextAlign.Center,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 0.dp)
         )
-
-        Spacer(Modifier.height(8.dp))
     }
 
     // ── 统计详情弹窗 ──

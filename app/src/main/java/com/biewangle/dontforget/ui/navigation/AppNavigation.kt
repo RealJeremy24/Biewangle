@@ -115,12 +115,6 @@ fun BiewangleNavHost() {
                                     modifier = Modifier.size(32.dp),
                                     tint = if (selected) WhiteText else TextWarmGray
                                 )
-                                Text(
-                                    screen.label,
-                                    fontSize = 18.sp,
-                                    color = if (selected) WhiteText else TextWarmGray,
-                                    fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal
-                                )
                             }
                         }
                     }
