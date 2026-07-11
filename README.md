@@ -1,4 +1,3 @@
-[README.md](https://github.com/user-attachments/files/29913305/README.md)
 # 别忘乐
 
 "别忘乐"谐音"别忘了"，也有别忘“乐”的寓意。  
