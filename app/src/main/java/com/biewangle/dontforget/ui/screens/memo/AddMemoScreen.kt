@@ -5,9 +5,11 @@ import android.net.Uri
 import android.provider.OpenableColumns
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -48,11 +50,13 @@ import androidx.compose.ui.graphics.Color
 import android.widget.Toast
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.biewangle.dontforget.BiewangleApp
+import com.biewangle.dontforget.R
 import com.biewangle.dontforget.data.model.RepeatType
 import com.biewangle.dontforget.ui.components.TimePickerDialog
 import com.biewangle.dontforget.ui.theme.AlertOrangeRed
@@ -205,7 +209,11 @@ fun AddMemoSheet(viewModel: MemoViewModel) {
                 .padding(horizontal = 16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("📅", fontSize = 24.sp)
+            Image(
+                painter = painterResource(id = R.drawable.ic_calendar_july13),
+                contentDescription = "选择日期",
+                modifier = Modifier.size(28.dp)
+            )
             Spacer(Modifier.width(12.dp))
             Text(
                 text = DateTimeUtils.formatFullDate(formState.targetDate),

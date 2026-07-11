@@ -467,13 +467,22 @@ private fun TotalDetailDialog(
                 } else {
                     data.groups.forEach { group ->
                         // 分组标题
-                        Text(
-                            text = "📅 ${group.groupLabel}",
-                            fontSize = scaledSp(18),
-                            fontWeight = FontWeight.Bold,
-                            color = TextDarkBrown,
-                            modifier = Modifier.padding(top = 4.dp)
-                        )
+                        Row(
+                            modifier = Modifier.padding(top = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Image(
+                                painter = painterResource(id = R.drawable.ic_calendar_july13),
+                                contentDescription = "日历",
+                                modifier = Modifier.size(28.dp)
+                            )
+                            Text(
+                                text = " ${group.groupLabel}",
+                                fontSize = scaledSp(18),
+                                fontWeight = FontWeight.Bold,
+                                color = TextDarkBrown
+                            )
+                        }
                         group.items.forEach { memo ->
                             Row(
                                 modifier = Modifier
@@ -556,13 +565,22 @@ private fun CompletedDetailDialog(
                 } else {
                     data.groups.forEach { group ->
                         // 日期标题
-                        Text(
-                            text = "📅 ${group.dateLabel}",
-                            fontSize = scaledSp(18),
-                            fontWeight = FontWeight.Bold,
-                            color = TextDarkBrown,
-                            modifier = Modifier.padding(top = 4.dp)
-                        )
+                        Row(
+                            modifier = Modifier.padding(top = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Image(
+                                painter = painterResource(id = R.drawable.ic_calendar_july13),
+                                contentDescription = "日历",
+                                modifier = Modifier.size(28.dp)
+                            )
+                            Text(
+                                text = " ${group.dateLabel}",
+                                fontSize = scaledSp(18),
+                                fontWeight = FontWeight.Bold,
+                                color = TextDarkBrown
+                            )
+                        }
                         group.items.forEach { memo ->
                             Row(
                                 modifier = Modifier
